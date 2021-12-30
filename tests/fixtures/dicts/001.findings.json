@@ -1,0 +1,125 @@
+[
+    {
+        "message": {
+            "text": "File contains an bcrypt hash which may be a credential."
+        },
+        "level": "error",
+        "ruleId": "CredentialHashBcrypt",
+        "locations": [
+            {
+                "physicalLocation": {
+                    "region": {
+                        "byteOffset": 8200,
+                        "snippet": {
+                            "binary": "JDJiJDEyJHE2WDRlQTQvQW1sNTN4Z0E4YmZNZS5pNllMVnFvbTlhaHBKejMxUjhxbjMzWk1BMmloLjM2"
+                        }
+                    },
+                    "contextRegion": {
+                        "snippet": {
+                            "binary": "AAAAAAAAAAAAAAAAAQACAAAAAAAkMmIkMTIkcTZYNGVBNC9BbWw1M3hnQThiZk1lLmk2WUxWcW9tOWFocEp6MzFSOHFuMzNaTUEyaWguMzZ4Z0E4YmZNZS5pNllMVnFvbTlhaA=="
+                        }
+                    },
+                    "artifactLocation": {
+                        "uri": "bcrypt",
+                        "index": 0,
+                        "uriBaseId": "STACSROOT"
+                    }
+                }
+            }
+        ],
+        "suppressions": []
+    },
+    {
+        "message": {
+            "text": "File contains an MD5 crypt hash which may be a credential."
+        },
+        "level": "error",
+        "ruleId": "CredentialHashMD5",
+        "locations": [
+            {
+                "physicalLocation": {
+                    "region": {
+                        "byteOffset": 26,
+                        "snippet": {
+                            "text": "$1$znwWbYub$3dR.11oVhKjtaOiqCt8V4."
+                        },
+                        "startLine": 3
+                    },
+                    "contextRegion": {
+                        "snippet": {
+                            "text": "s a file.\n\nHash is `$1$znwWbYub$3dR.11oVhKjtaOiqCt8V4.hKjtaOiqCt8V4.`\n\n\nWh"
+                        }
+                    },
+                    "artifactLocation": {
+                        "uri": "example_more.txt",
+                        "index": 5,
+                        "uriBaseId": "STACSROOT"
+                    }
+                }
+            }
+        ],
+        "suppressions": []
+    },
+    {
+        "message": {
+            "text": "Potential Github API token found."
+        },
+        "level": "error",
+        "ruleId": "CredentialSaaSGithubToken",
+        "locations": [
+            {
+                "physicalLocation": {
+                    "region": {
+                        "byteOffset": 3642,
+                        "snippet": {
+                            "text": "ghp_YWNjb3VudHMyM3JkZnNkZnNkZnNkZnNkZnNk"
+                        },
+                        "startLine": 60
+                    },
+                    "contextRegion": {
+                        "snippet": {
+                            "text": "et faucibus lacus.\n\nghp_YWNjb3VudHMyM3JkZnNkZnNkZnNkZnNkZnNkZnNkZnNkZnNkZnNkZnNk"
+                        }
+                    },
+                    "artifactLocation": {
+                        "uri": "example_two.txt",
+                        "index": 2,
+                        "uriBaseId": "STACSROOT"
+                    }
+                }
+            }
+        ],
+        "suppressions": []
+    },
+    {
+        "message": {
+            "text": "File contains an MD5 crypt hash which may be a credential."
+        },
+        "level": "error",
+        "ruleId": "CredentialHashMD5",
+        "locations": [
+            {
+                "physicalLocation": {
+                    "region": {
+                        "byteOffset": 26,
+                        "snippet": {
+                            "text": "$1$znwWbYub$3dR.11oVhKjtaOiqCt8V4."
+                        },
+                        "startLine": 3
+                    },
+                    "contextRegion": {
+                        "snippet": {
+                            "text": "s a file.\\n\\nHash is `$1$znwWbYub$3dR.11oVhKjtaOiqCt8V4.hKjtaOiqCt8V4.`\\n\\n\\nWh"
+                        }
+                    },
+                    "artifactLocation": {
+                        "uri": "example_more.txt",
+                        "index": 4,
+                        "uriBaseId": "STACSROOT"
+                    }
+                }
+            }
+        ],
+        "suppressions": []
+    }
+]

@@ -1,0 +1,54 @@
+[
+    {
+        "location": {
+            "uri": "bcrypt",
+            "uriBaseId": "STACSROOT"
+        },
+        "hashes": {
+            "md5": "dcc050e391bbb913d2374312098f7d3e"
+        }
+    },
+    {
+        "location": {
+            "uri": "example.txt",
+            "uriBaseId": "STACSROOT"
+        },
+        "hashes": {
+            "md5": "cb0fe2bcdc4e70b6ecfad442198eafa0"
+        }
+    },
+    {
+        "location": {
+            "uri": "example_two.txt",
+            "uriBaseId": "STACSROOT"
+        },
+        "hashes": {
+            "md5": "659d0f31a464345128319d3a0a9f3e9f"
+        }
+    },
+    {
+        "location": {
+            "uri": "example.zip",
+            "uriBaseId": "STACSROOT"
+        }
+    },
+    {
+        "location": {
+            "uri": "example_more.txt",
+            "uriBaseId": "STACSROOT"
+        },
+        "parentIndex": 3,
+        "hashes": {
+            "md5": "12e6faf813f3b2696f7df2e353683357"
+        }
+    },
+    {
+        "location": {
+            "uri": "example_more.txt",
+            "uriBaseId": "STACSROOT"
+        },
+        "hashes": {
+            "md5": "12e6faf813f3b2696f7df2e353683357"
+        }
+    }
+]

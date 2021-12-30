@@ -1,0 +1,27 @@
+{
+    "bcrypt": {},
+    "example.txt": {
+        "1": {
+            "content": "+It contains a bunch of things, including static credentials. See?\n+\n+aws_access_key_id=AKIAZJ3PDTI2R9JLXCTH\n+aws_secret_key_id=39isgIVkaUNhaUFZz+U3ENRpXnAmfh/KbPlUIWiQ\n+\n+Told you!\n",
+            "offset": 1
+        }
+    },
+    "example_more.txt": {
+        "1": {
+            "content": "+This is a file.\n+\n+Hash is `$1$znwWbYub$3dR.11oVhKjtaOiqCt8V4.`\n+\n+\n+Whoops. I added a credential.\n+\n",
+            "offset": 1
+        }
+    },
+    "example_two.txt": {
+        "1": {
+            "content": "-This is a file without anything weird about it.\n \n-Well, yet.\n+See? Added a credential as a weird offset.\n+\n+\n+-----BEGIN RSA PRIVATE KEY-----\n+MIIEowIBAAKCAQEA1grlj7tI6e26pvuxUNAgHUqcC2suGxdSUnF8dr5Y+EUjQCzp\n+8DntD32lkE2AzRKr7kI4MiKg7Q/HydsiZcp+IUvaIYSIZ6vOvmIDG8UoGQVh60k5\n+SbTNKlx4IwjGg2yHsNiUSiq9VouSY4qgaI5JlLxI5reZXJKj5AYZGFHsID8iQwwk\n+gfhd3aB5CcQa+JONNFqbSsocU5qTruXMVBszlOiDEVcskcvTN140GL5NbfjRQgb8\n+5h/E7s9Z77eiIhkWjJW4SvlfX/XppuHYqRknG2mAPuHTMom6bocWzNleB5AGtzWe\n+Rld/tJhc8tkxWWbSKMTQxINHK7OfTNbhJsWgGwIDAQABAoIBADXiqmZj/Pg/jDUL\n+ulkg/GTDasOJKSNS3Lu6rF3sj9N4/GXkqMR8oMy8khjhGiMGp1glPaaJh0AHMAIG\n+dANyVgyl3vV/OyP2YecWH7g3C2A5NayZU53Vsa0PeINBa1Cc2xBPhg2h8ua93o3G\n+0Zlg8O9L84J6CFcA59e5HUo9HZgENtwe1y4BlEdCnc+QAgeJ4sBKRHT2I4RKqgUd\n+q5o4QVmKdP1RLyHV3DgXetQWkM3eUNvRkdbMDh/9bRBkP7yK/mUo6ummtRUfqYw+\n+xV0SSdGtR3ht/X+g8m4WruRhanUWRymoXKrHyw7Sl5JX58f04g/ho7j5zJxBoUkf\n+/ZpYU4ECgYEA96VblmkL2l5Ibs96/Xhju1kYzVDh5EE4d/3MYwjhbs/ZOsNA4nWK\n+T9AZ3x2iF3hR1YfNoKw3kZJkewTT41uechCjxhTTxh6tBTHC2KuW/IoxCL2NLmGt\n+5Hkmz8gBFhmYaVAPPxJ4fzKLC81ROZEYAfaWMZyq+RYuOKXRPxHrJEECgYEA3UNY\n+F9oChs4LDEnd1+MWckpGPwHjfqXYad2C2PcBq0umNvogdgk/snLslvZHUO9xqKL9\n+ZVgOcvH76hORZjprZCL0mSfkuuGJ9NwE1JQk4p6j9cOfrkVkp+AKKdUI9RzElBwb\n+HiA8cUD/nDLt+/lUEqutgMAEx9KMxzp3lmh8fVsCgYAIlNtSn/tAKuo5pMjvRZ+3\n+G0RHwRjCzxvE1K+jcuhU7bDqX1+9OTN8xopO9/jo9UtoqdcPTUhzq+39cVJiW4dn\n+DnqOX6RjBicaufm1hmSqBaPjWKYuyEW9WBFnO9gFywdEBvkwR1STm83Dr+6znvqE\n+/uV/fJ1UGlepsN1KYTWTwQKBgHM8I6EodbBnlvFrdxJ8vq//Zt5hyW2oSjG4n/EH\n+k+L2nzZ6xnUzE+2IVRe6ZCIO0o8VdAtX9Q6AYMbkMhGf01Zvrhwl3sZFuGfCPvHH\n+xf4QySuyGnPUyDt2P1TSErw1o1vP13+1IkWJqJZdH/zfOZ4Ps2kemF7JlXAdTzMS\n+b+OJAoGBAIzJDzElzcMtypqPVMT16xp4uock9+dG25vfPGu6APqDCUG0JJwSpS7M\n+zswRCVGud5EFap+qDr039xotlfEWoPg7IBdGZ99xjxOKakEHtpy9KKBM2L3KR8vT\n+QaHFmvIWpEVxFulDGpHlQ4N0F5TewfNgTu3kZnUGjD+GH5mBzHQW\n+-----END RSA PRIVATE KEY-----\n \n Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus eget sollicitudin\n arcu. Sed risus magna, luctus nec volutpat vel, fringilla sed nulla. Pellentesque ante\n",
+            "offset": 1
+        },
+        "56": {
+            "content": " justo orci. Aliquam erat volutpat. Maecenas a massa mattis, pharetra lorem sit amet,\n euismod ex. Morbi finibus eros eget velit volutpat, vitae accumsan turpis rutrum.\n Pellentesque mollis in lorem eget ullamcorper. Curabitur eget faucibus lacus.\n+\n+ghp_YWNjb3VudHMyM3JkZnNkZnNkZnNkZnNkZnNk\n+\n",
+            "offset": 38
+        }
+    },
+    "moved": {},
+    "remove": {}
+}

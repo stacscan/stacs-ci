@@ -10,6 +10,8 @@ charset-normalizer==2.0.9
     # via requests
 idna==3.3
     # via requests
+jmespath==0.10.0
+    # via -r requirements.in
 requests==2.26.0
     # via -r requirements.in
 urllib3==1.26.7

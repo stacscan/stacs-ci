@@ -1,0 +1,91 @@
+diff --git a/bcrypt b/bcrypt
+new file mode 100755
+index 0000000..78bd84b
+Binary files /dev/null and b/bcrypt differ
+diff --git a/example.txt b/example.txt
+new file mode 100644
+index 0000000..f6c6573
+--- /dev/null
++++ b/example.txt
+@@ -0,0 +1,6 @@
++It contains a bunch of things, including static credentials. See?
++
++aws_access_key_id=AKIAZJ3PDTI2R9JLXCTH
++aws_secret_key_id=39isgIVkaUNhaUFZz+U3ENRpXnAmfh/KbPlUIWiQ
++
++Told you!
+diff --git a/example_more.txt b/example_more.txt
+new file mode 100644
+index 0000000..71b6d9e
+--- /dev/null
++++ b/example_more.txt
+@@ -0,0 +1,7 @@
++This is a file.
++
++Hash is `$1$znwWbYub$3dR.11oVhKjtaOiqCt8V4.`
++
++
++Whoops. I added a credential.
++
+diff --git a/example_two.txt b/example_two.txt
+index 02e6ee4..0c35cb5 100644
+--- a/example_two.txt
++++ b/example_two.txt
+@@ -1,6 +1,34 @@
+-This is a file without anything weird about it.
+ 
+-Well, yet.
++See? Added a credential as a weird offset.
++
++
++-----BEGIN RSA PRIVATE KEY-----
++MIIEowIBAAKCAQEA1grlj7tI6e26pvuxUNAgHUqcC2suGxdSUnF8dr5Y+EUjQCzp
++8DntD32lkE2AzRKr7kI4MiKg7Q/HydsiZcp+IUvaIYSIZ6vOvmIDG8UoGQVh60k5
++SbTNKlx4IwjGg2yHsNiUSiq9VouSY4qgaI5JlLxI5reZXJKj5AYZGFHsID8iQwwk
++gfhd3aB5CcQa+JONNFqbSsocU5qTruXMVBszlOiDEVcskcvTN140GL5NbfjRQgb8
++5h/E7s9Z77eiIhkWjJW4SvlfX/XppuHYqRknG2mAPuHTMom6bocWzNleB5AGtzWe
++Rld/tJhc8tkxWWbSKMTQxINHK7OfTNbhJsWgGwIDAQABAoIBADXiqmZj/Pg/jDUL
++ulkg/GTDasOJKSNS3Lu6rF3sj9N4/GXkqMR8oMy8khjhGiMGp1glPaaJh0AHMAIG
++dANyVgyl3vV/OyP2YecWH7g3C2A5NayZU53Vsa0PeINBa1Cc2xBPhg2h8ua93o3G
++0Zlg8O9L84J6CFcA59e5HUo9HZgENtwe1y4BlEdCnc+QAgeJ4sBKRHT2I4RKqgUd
++q5o4QVmKdP1RLyHV3DgXetQWkM3eUNvRkdbMDh/9bRBkP7yK/mUo6ummtRUfqYw+
++xV0SSdGtR3ht/X+g8m4WruRhanUWRymoXKrHyw7Sl5JX58f04g/ho7j5zJxBoUkf
++/ZpYU4ECgYEA96VblmkL2l5Ibs96/Xhju1kYzVDh5EE4d/3MYwjhbs/ZOsNA4nWK
++T9AZ3x2iF3hR1YfNoKw3kZJkewTT41uechCjxhTTxh6tBTHC2KuW/IoxCL2NLmGt
++5Hkmz8gBFhmYaVAPPxJ4fzKLC81ROZEYAfaWMZyq+RYuOKXRPxHrJEECgYEA3UNY
++F9oChs4LDEnd1+MWckpGPwHjfqXYad2C2PcBq0umNvogdgk/snLslvZHUO9xqKL9
++ZVgOcvH76hORZjprZCL0mSfkuuGJ9NwE1JQk4p6j9cOfrkVkp+AKKdUI9RzElBwb
++HiA8cUD/nDLt+/lUEqutgMAEx9KMxzp3lmh8fVsCgYAIlNtSn/tAKuo5pMjvRZ+3
++G0RHwRjCzxvE1K+jcuhU7bDqX1+9OTN8xopO9/jo9UtoqdcPTUhzq+39cVJiW4dn
++DnqOX6RjBicaufm1hmSqBaPjWKYuyEW9WBFnO9gFywdEBvkwR1STm83Dr+6znvqE
++/uV/fJ1UGlepsN1KYTWTwQKBgHM8I6EodbBnlvFrdxJ8vq//Zt5hyW2oSjG4n/EH
++k+L2nzZ6xnUzE+2IVRe6ZCIO0o8VdAtX9Q6AYMbkMhGf01Zvrhwl3sZFuGfCPvHH
++xf4QySuyGnPUyDt2P1TSErw1o1vP13+1IkWJqJZdH/zfOZ4Ps2kemF7JlXAdTzMS
++b+OJAoGBAIzJDzElzcMtypqPVMT16xp4uock9+dG25vfPGu6APqDCUG0JJwSpS7M
++zswRCVGud5EFap+qDr039xotlfEWoPg7IBdGZ99xjxOKakEHtpy9KKBM2L3KR8vT
++QaHFmvIWpEVxFulDGpHlQ4N0F5TewfNgTu3kZnUGjD+GH5mBzHQW
++-----END RSA PRIVATE KEY-----
+ 
+ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus eget sollicitudin
+ arcu. Sed risus magna, luctus nec volutpat vel, fringilla sed nulla. Pellentesque ante
+@@ -28,3 +56,6 @@ luctus ipsum. Donec maximus mi id est pellentesque, in dignissim quam posuere. I
+ justo orci. Aliquam erat volutpat. Maecenas a massa mattis, pharetra lorem sit amet,
+ euismod ex. Morbi finibus eros eget velit volutpat, vitae accumsan turpis rutrum.
+ Pellentesque mollis in lorem eget ullamcorper. Curabitur eget faucibus lacus.
++
++ghp_YWNjb3VudHMyM3JkZnNkZnNkZnNkZnNkZnNk
++
+diff --git a/move b/moved
+similarity index 100%
+rename from move
+rename to moved
+diff --git a/remove b/remove
+deleted file mode 100644
+index c86604c..0000000
+--- a/remove
++++ /dev/null
+@@ -1,4 +0,0 @@
+-AAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+-DDDDDDDDDDDDDDDDDDDDDDD
