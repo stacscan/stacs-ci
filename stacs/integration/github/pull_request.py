@@ -179,7 +179,7 @@ def main():
         log.fatal(err)
         sys.exit(3)
 
-    # Parse finding hashes from review comments.
+    # Parse finding hashes (fhahes) from existing review and issue comments.
     existing_findings = []
 
     for comment in comments:
@@ -223,6 +223,12 @@ def main():
                 )
                 continue
 
+            # Offsets for binaries are in bytes, where text is in lines.
+            if line:
+                location = f"line `{line}`"
+            else:
+                location = f"{offset}-bytes"
+
             # Calculate the position in the diff to add the review comment, and add it.
             try:
                 position = get_position_in_diff(
@@ -235,7 +241,7 @@ def main():
                     repository=os.environ["GITHUB_REPOSITORY"],
                     reference=os.environ["GITHUB_REF"],
                     comment=FILE_COMMENT_TEMPLATE.format(
-                        location=f"line `{line}`",
+                        location=location,
                         sample=sample,
                         filename=filename,
                         rule=rule,
@@ -258,14 +264,8 @@ def main():
                     "comment to pull-request"
                 )
 
-            # Offsets for binaries are in bytes, where text is in lines.
-            if line:
-                location = f"line `{line}`"
-            else:
-                location = f"{offset}-bytes"
-
-            # If the finding is inside of an archive, show the filename as a nested
-            # path, rather than a single file name.
+            # If the finding is inside of an archive, show the filename as a tree,
+            # rather than a single file name.
             if helpers.has_parent(artifact=artifact_index, artifacts=artifacts):
                 github.add_issue_comment(
                     repository=os.environ["GITHUB_REPOSITORY"],
