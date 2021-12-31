@@ -16,9 +16,9 @@ from typing import Any, Dict, List
 from stacs.integration import diff, exceptions, helpers
 from stacs.integration.github.client import Client
 from stacs.integration.github.constants import (
-    COMMENT_TEMPLATE,
+    FILE_COMMENT_TEMPLATE,
+    NESTED_COMMENT_TEMPLATE,
     PATTERN_FHASH,
-    REVIEW_COMMENT_TEMPLATE,
 )
 
 
@@ -191,6 +191,7 @@ def main():
     for run in sarif.get("runs", []):
         tool = run.get("tool", [])
         artifacts = run.get("artifacts", [])
+        version = helpers.get_stacs_version(tool=tool)
 
         # TODO: We should deserialise the results ('findings') into a model, and use
         # properties to access all of the required attributes, rather than needing lots
@@ -199,32 +200,20 @@ def main():
             if helpers.finding_suppressed(result):
                 continue
 
-            # Calculate the position in the diff, which we need to pass to Github in
-            # order to add a comment to the correct location.
-            review_comment = True
-
-            try:
-                position = get_position_in_diff(
-                    finding=result,
-                    changes=changes,
-                    artifacts=artifacts,
-                )
-            except exceptions.ChangeNotInDiffException:
-                # We can't add a review comment if the change isn't in the diff, so a
-                # regular comment will be required.
-                review_comment = False
-                log.warning(
-                    "Finding does not appear in the current diff, adding regular "
-                    "comment to pull-request"
-                )
-
             # Extract data from the finding required for this comment.
             line = helpers.get_start_line(finding=result)
-            hash = helpers.get_finding_hash(finding=result)
+            hash = helpers.get_finding_hash(finding=result, artifacts=artifacts)
             rule = helpers.get_rule_id(finding=result)
             sample = helpers.get_sample(finding=result)
+            offset = helpers.get_offset(finding=result)
             filename = helpers.get_filename(finding=result)
             suppression = helpers.get_suppression(filename=filename)
+            description = helpers.get_rule_description(rule=rule, tool=tool)
+            artifact_index = helpers.get_artifact_index(finding=result)
+            virtual_path = helpers.get_virtual_path(
+                artifact=artifact_index,
+                artifacts=artifacts,
+            )
 
             # Skip adding a comment if one already exists.
             if hash in existing_findings:
@@ -234,33 +223,83 @@ def main():
                 )
                 continue
 
-            # Generate and add the review comment.
-            if review_comment:
+            # Calculate the position in the diff to add the review comment, and add it.
+            try:
+                position = get_position_in_diff(
+                    finding=result,
+                    changes=changes,
+                    artifacts=artifacts,
+                )
+
                 github.add_pull_request_review_comment(
                     repository=os.environ["GITHUB_REPOSITORY"],
                     reference=os.environ["GITHUB_REF"],
-                    comment=REVIEW_COMMENT_TEMPLATE.format(
-                        line=line,
+                    comment=FILE_COMMENT_TEMPLATE.format(
+                        location=f"line `{line}`",
                         sample=sample,
                         filename=filename,
                         rule=rule,
-                        description=helpers.get_rule_description(rule=rule, tool=tool),
+                        description=description,
                         suppression=suppression,
                         hash=hash,
-                        version=helpers.get_stacs_version(tool=tool),
+                        version=version,
                     ),
                     filepath=filename,
                     position=position,
                     commit=os.environ["GITHUB_SHA"],
                 )
+
+                continue
+            except exceptions.ChangeNotInDiffException:
+                # If the file changed wasn't in the diff, then we'll need to add a
+                # regular comment.
+                log.warning(
+                    "Finding does not appear in the current diff, adding regular "
+                    "comment to pull-request"
+                )
+
+            # Offsets for binaries are in bytes, where text is in lines.
+            if line:
+                location = f"line `{line}`"
+            else:
+                location = f"{offset}-bytes"
+
+            # If the finding is inside of an archive, show the filename as a nested
+            # path, rather than a single file name.
+            if helpers.has_parent(artifact=artifact_index, artifacts=artifacts):
+                github.add_issue_comment(
+                    repository=os.environ["GITHUB_REPOSITORY"],
+                    reference=os.environ["GITHUB_REF"],
+                    comment=NESTED_COMMENT_TEMPLATE.format(
+                        location=location,
+                        sample=sample,
+                        filename=filename,
+                        tree=helpers.get_file_tree(filename=virtual_path),
+                        rule=rule,
+                        description=description,
+                        suppression=suppression,
+                        hash=hash,
+                        version=version,
+                    ),
+                )
                 continue
 
-            # else:
-            #     github.add_issue_comment(
-            #         repository=os.environ["GITHUB_REPOSITORY"],
-            #         reference=os.environ["GITHUB_REF"],
-            #         comment=f"This is a binary / nested finding for {filename}",
-            #     )
+            # Otherwise, the finding is likely directly in a binary which is in the
+            # repository.
+            github.add_issue_comment(
+                repository=os.environ["GITHUB_REPOSITORY"],
+                reference=os.environ["GITHUB_REF"],
+                comment=FILE_COMMENT_TEMPLATE.format(
+                    location=location,
+                    sample=sample,
+                    filename=filename,
+                    rule=rule,
+                    description=description,
+                    suppression=suppression,
+                    hash=hash,
+                    version=version,
+                ),
+            )
 
 
 if __name__ == "__main__":

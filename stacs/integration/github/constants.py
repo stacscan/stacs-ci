@@ -6,12 +6,12 @@ SPDX-License-Identifier: BSD-3-Clause
 DEFAULT_API_URI = "https://api.github.com"
 
 # Used to extract hashes of existing comments for deduplication.
-PATTERN_FHASH = r"\*\*FHASH\*\*:([a-f0-9]{40})\]"
+PATTERN_FHASH = r"\s+\*\*F\*\*:([a-f0-9]{40})]"
 
-# Review comments are in-line comments on changes which are in pull-requests.
-REVIEW_COMMENT_TEMPLATE = (
-    "#### :x: STACS Finding\n"
-    "STACS has found a potential static token or credential at line {line} of "
+# Finding is inside of a regular file.
+FILE_COMMENT_TEMPLATE = (
+    "#### :x: [STACS](https://github.com/stacscan/stacs) Finding\n"
+    "STACS has found a potential static token or credential at {location} of "
     "`{filename}` due to _{description}_.\n\n"
     "<details><summary>Finding Sample</summary>\n\n"
     "```\n"
@@ -27,17 +27,16 @@ REVIEW_COMMENT_TEMPLATE = (
     "<details><summary>Example Suppression</summary>\n\n"
     "```json\n{suppression}\n```\n\n"
     "</details>\n\n"
-    "<sub>Powered by [STACS](https://github.com/stacscan/stacs) (v{version})</sub> "
-    "<sub>[**RULE**:{rule}, **FHASH**:{hash}]</sub>"
+    "<sub>[**V**:{version}, **R**:{rule}, **F**:{hash}]</sub>"
 )
 
-# There are two conditions where a comment needs to be added to the pull-request
-# directly: Either the finding is inside a binary file, or the finding is in a file, or
-# section of a file, which was not changed in this pull request.
-COMMENT_TEMPLATE = """
-    "#### :x: STACS Finding\n"
-    "STACS has found a potential static token or credential at offset {offset}-bytes "
-    "of `{filename}` due to _{description}_.\n\n"
+# Finding is nested inside of an archive.
+NESTED_COMMENT_TEMPLATE = (
+    "#### :x: [STACS](https://github.com/stacscan/stacs) Finding\n"
+    "STACS has found a potential static token or credential at {location} of "
+    "`{filename}` due to _{description}_. Please be aware that this file is inside of "
+    "an archive, the full path to the file is:\n\n"
+    "```\n{tree}\n```\n\n"
     "<details><summary>Finding Sample</summary>\n\n"
     "```\n"
     "...{sample}...\n"
@@ -52,6 +51,5 @@ COMMENT_TEMPLATE = """
     "<details><summary>Example Suppression</summary>\n\n"
     "```json\n{suppression}\n```\n\n"
     "</details>\n\n"
-    "<sub>Powered by [STACS](https://github.com/stacscan/stacs) (v{version})</sub> "
-    "<sub>[**RULE**:{rule}, **FHASH**:{hash}]</sub>"
-"""
+    "<sub>[**V**:{version}, **R**:{rule}, **F**:{hash}]</sub>"
+)
