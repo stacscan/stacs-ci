@@ -5,7 +5,6 @@ SPDX-License-Identifier: BSD-3-Clause
 
 
 import argparse
-import hashlib
 import json
 import logging
 import os
@@ -14,57 +13,13 @@ import sys
 from json.decoder import JSONDecodeError
 from typing import Any, Dict, List
 
-import jmespath
-from stacs.integration import diff, exceptions
+from stacs.integration import diff, exceptions, helpers
 from stacs.integration.github.client import Client
-
-# Review comments are in-line comments on changes which are in pull-requests.
-REVIEW_COMMENT_TEMPLATE = (
-    "#### :x: STACS Finding\n"
-    "STACS has found a potential static token or credential at line {line} of "
-    "`{filename}` due to _{description}_.\n\n"
-    "<details><summary>Finding Sample</summary>\n\n"
-    "```\n"
-    "...{sample}...\n"
-    "```\n\n"
-    "</details>\n\n"
-    "If this credential is valid it should be immediately revoked, and the cause of "
-    "this credential making it into this file investigated.\n\n"
-    "If this finding is against a 'fake' credential, such as in a test fixture, this "
-    "finding can be suppressed using an ignore list in the root of this repository. A "
-    "basic ignore list entry can be found below which may be suitable, otherwise, "
-    "please refer to the [documentation on ignore lists](https://...)\n\n"
-    "<details><summary>Example Suppression</summary>\n\n"
-    "```json\n{suppression}\n```\n\n"
-    "</details>\n\n"
-    "<sub>Powered by [STACS](https://github.com/stacscan/stacs) (v{version})</sub> "
-    "<sub>[**RULE**:{rule}, **FHASH**:{hash}]</sub>"
+from stacs.integration.github.constants import (
+    COMMENT_TEMPLATE,
+    PATTERN_FHASH,
+    REVIEW_COMMENT_TEMPLATE,
 )
-
-# There are two conditions where a comment needs to be added to the pull-request
-# directly: Either the finding is inside a binary file, or the finding is in a file, or
-# section of a file, which was not changed in this pull request.
-BINARY_COMMENT_TEMPLATE = """
-    "#### :x: STACS Finding\n"
-    "STACS has found a potential static token or credential at offset {offset}-bytes "
-    "of `{filename}` due to _{description}_.\n\n"
-    "<details><summary>Finding Sample</summary>\n\n"
-    "```\n"
-    "...{sample}...\n"
-    "```\n\n"
-    "</details>\n\n"
-    "If this credential is valid it should be immediately revoked, and the cause of "
-    "this credential making it into this file investigated.\n\n"
-    "If this finding is against a 'fake' credential, such as in a test fixture, this "
-    "finding can be suppressed using an ignore list in the root of this repository. A "
-    "basic ignore list entry can be found below which may be suitable, otherwise, "
-    "please refer to the [documentation on ignore lists](https://...)\n\n"
-    "<details><summary>Example Suppression</summary>\n\n"
-    "```json\n{suppression}\n```\n\n"
-    "</details>\n\n"
-    "<sub>Powered by [STACS](https://github.com/stacscan/stacs) (v{version})</sub> "
-    "<sub>[**RULE**:{rule}, **FHASH**:{hash}]</sub>"
-"""
 
 
 def validate_environment() -> List[str]:
@@ -85,157 +40,14 @@ def validate_environment() -> List[str]:
     return missing
 
 
-def finding_suppressed(finding: Dict[str, Any]) -> bool:
-    """Checks whether a finding is suppressed."""
-    suppressions = finding.get("suppressions", [])
-
-    if not suppressions:
-        return False
-
-    # Findings may be listed as suppressed but with a status of 'rejected', 'accepted',
-    # or 'underReview'. If the suppression isn't 'accepted' then we'll still annotate.
-    for suppression in suppressions:
-        if suppression.get("status", str()).lower() != "accepted":
-            return False
-
-    return True
-
-
-def has_parent(artifact: int, artifacts: Dict[str, Any]) -> bool:
-    """Checks whether the given artifact has a parent, indicating it is an archive."""
-    if artifacts[artifact].get("parentIndex") is not None:
-        return True
-
-    return False
-
-
-def get_stacs_version(tool: Dict[str, Any]) -> str:
-    """Returns the current STACS version from the tool section of the SARIF document."""
-    version = jmespath.search("driver.version", tool)
-    if not version:
-        return "Unknown"
-
-    return version
-
-
-def get_rule_description(rule: str, tool: Dict[str, Any]) -> str:
-    """Returns a normalised plain-text description for a given rule id."""
-    rules = jmespath.search("driver.rules", tool)
-    if not rules:
-        return "unknown"
-
-    for candidate in rules:
-        if candidate.get("id") == rule:
-            # Strip proceeding capital letter and trailing full-stop, if present.
-            raw = jmespath.search("shortDescription.text", candidate)
-            description = str()
-
-            for index, char in enumerate(list(raw)):
-                description += char
-                if index == 0:
-                    description = description.lower()
-
-            return description.rstrip(".")
-
-    return "unknown"
-
-
-def get_finding_hash(finding: Dict[str, Any]) -> str:
-    """Generates a hash for the finding for use in de-duplicating comments."""
-    filename = get_filename(finding)
-    offset = get_offset(finding)
-    rule = get_rule_id(finding)
-
-    return hashlib.sha1(bytes(f"{filename}.{offset}.{rule}", "utf-8")).hexdigest()
-
-
-def get_rule_id(finding: Dict[str, Any]) -> str:
-    """Returns the rule identifier for a given finding."""
-    return jmespath.search("ruleId", finding)
-
-
-def get_filename(finding: Dict[str, Any]) -> str:
-    """Returns the filename for a given finding."""
-    #
-    # TODO: If nested...?
-    #
-    # if has_parent(get_artifact_index(finding), artifacts):
-    return jmespath.search(
-        "locations[0].physicalLocation.artifactLocation.uri",
-        finding,
-    )
-
-
-def get_offset(finding: Dict[str, Any]) -> int:
-    """Returns the byte offset of a given finding."""
-    return int(
-        jmespath.search(
-            "locations[0].physicalLocation.region.byteOffset",
-            finding,
-        )
-    )
-
-
-def get_artifact_index(finding: Dict[str, Any]) -> int:
-    """Returns the artifact index for a given finding."""
-    return int(
-        jmespath.search(
-            "locations[0].physicalLocation.artifactLocation.index",
-            finding,
-        )
-    )
-
-
-def get_sample(finding: Dict[str, Any]) -> str:
-    """Returns the sample for a given finding."""
-    # Determine whether a text or binary sample should be returned - with preference to
-    # text.
-    text = jmespath.search(
-        "locations[0].physicalLocation.contextRegion.snippet.text", finding
-    )
-    if text:
-        return text
-
-    return jmespath.search(
-        "locations[0].physicalLocation.contextRegion.snippet.binary", finding
-    )
-
-
-def get_start_line(finding: Dict[str, Any]) -> int:
-    """Returns the line number which a given finding starts at."""
-    line = jmespath.search("locations[0].physicalLocation.region.startLine", finding)
-
-    if line:
-        return int(line)
-    else:
-        return 0
-
-
-def get_suppression(filename: str):
-    """Generate an example suppression document for the given file."""
-    return json.dumps(
-        {
-            "include": [],
-            "ignore": [
-                {
-                    "pattern": f"{re.escape(filename)}$",
-                    "reason": "A reason for this suppression",
-                }
-            ],
-        },
-        indent=4,
-        sort_keys=True,
-    )
-
-
 def get_position_in_diff(
     finding: Dict[str, Any],
     changes: Dict[str, Dict[int, diff.Hunk]],
     artifacts: Dict[str, Any],
 ) -> int:
     """Determine the position that the comment needs to be added in the diff."""
-    filename = get_filename(finding)
-    artifact = get_artifact_index(finding)
+    filename = helpers.get_filename(finding)
+    artifact = helpers.get_artifact_index(finding)
     comment_location = 0
 
     # If there is no line-number, the finding is very likely inside of a binary. Github
@@ -244,13 +56,13 @@ def get_position_in_diff(
     #
     # This should also take care of nested files, as all archive formats will be binary,
     # which prevents the need for an additional check here.
-    line = get_start_line(finding)
+    line = helpers.get_start_line(finding)
     if not line:
         raise exceptions.ChangeNotInDiffException()
 
     # Check whether this finding has a parent, which would indicate that it is from a
     # file inside of an archive - so it won't be present in the diff directly.
-    if has_parent(artifact, artifacts):
+    if helpers.has_parent(artifact, artifacts):
         raise exceptions.ChangeNotInDiffException()
 
     # Check that the finding is inside a file present in the diff. A finding may be in
@@ -348,17 +160,43 @@ def main():
         log.fatal(err)
         sys.exit(3)
 
-    # TODO: Get a list of all comments, and review comments here. Generating a list of
-    # hashes which are already annotated.
+    # Request a list of comments and issue comments from Github.
+    comments = []
+    try:
+        comments.extend(
+            github.get_issue_comments(
+                repository=os.environ["GITHUB_REPOSITORY"],
+                reference=os.environ["GITHUB_REF"],
+            )
+        )
+        comments.extend(
+            github.get_pull_request_review_comments(
+                repository=os.environ["GITHUB_REPOSITORY"],
+                reference=os.environ["GITHUB_REF"],
+            )
+        )
+    except exceptions.ExternalServiceException as err:
+        log.fatal(err)
+        sys.exit(3)
+
+    # Parse finding hashes from review comments.
     existing_findings = []
+
+    for comment in comments:
+        fhash = re.search(PATTERN_FHASH, comment)
+        if fhash:
+            existing_findings.append(fhash.group(1))
 
     # Roll over the findings and add a comment if they are not suppressed.
     for run in sarif.get("runs", []):
         tool = run.get("tool", [])
         artifacts = run.get("artifacts", [])
 
+        # TODO: We should deserialise the results ('findings') into a model, and use
+        # properties to access all of the required attributes, rather than needing lots
+        # of get_* helpers.
         for result in run.get("results"):
-            if finding_suppressed(result):
+            if helpers.finding_suppressed(result):
                 continue
 
             # Calculate the position in the diff, which we need to pass to Github in
@@ -381,15 +219,19 @@ def main():
                 )
 
             # Extract data from the finding required for this comment.
-            line = get_start_line(finding=result)
-            hash = get_finding_hash(finding=result)
-            rule = get_rule_id(finding=result)
-            sample = get_sample(finding=result)
-            filename = get_filename(finding=result)
-            suppression = get_suppression(filename=filename)
+            line = helpers.get_start_line(finding=result)
+            hash = helpers.get_finding_hash(finding=result)
+            rule = helpers.get_rule_id(finding=result)
+            sample = helpers.get_sample(finding=result)
+            filename = helpers.get_filename(finding=result)
+            suppression = helpers.get_suppression(filename=filename)
 
             # Skip adding a comment if one already exists.
             if hash in existing_findings:
+                log.info(
+                    f"Skipping comment for finding, as hash for finding {hash} already "
+                    "exists."
+                )
                 continue
 
             # Generate and add the review comment.
@@ -402,10 +244,10 @@ def main():
                         sample=sample,
                         filename=filename,
                         rule=rule,
-                        description=get_rule_description(rule=rule, tool=tool),
+                        description=helpers.get_rule_description(rule=rule, tool=tool),
                         suppression=suppression,
                         hash=hash,
-                        version=get_stacs_version(tool=tool),
+                        version=helpers.get_stacs_version(tool=tool),
                     ),
                     filepath=filename,
                     position=position,

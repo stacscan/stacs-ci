@@ -30,6 +30,7 @@ class STACSIntegrationDiff(unittest.TestCase):
         expected = [
             "bcrypt",
             "example.txt",
+            "example.zip",
             "example_more.txt",
             "example_two.txt",
             "moved",
