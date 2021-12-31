@@ -27,7 +27,7 @@ FILE_COMMENT_TEMPLATE = (
     "<details><summary>Example Suppression</summary>\n\n"
     "```json\n{suppression}\n```\n\n"
     "</details>\n\n"
-    "<sub>[**V**:{version}, **R**:{rule}, **F**:{hash}]</sub>"
+    "<sub>[**V**:{version}, **R**:{rule}, **F**:{fhash}]</sub>"
 )
 
 # Finding is nested inside of an archive.
@@ -51,5 +51,5 @@ NESTED_COMMENT_TEMPLATE = (
     "<details><summary>Example Suppression</summary>\n\n"
     "```json\n{suppression}\n```\n\n"
     "</details>\n\n"
-    "<sub>[**V**:{version}, **R**:{rule}, **F**:{hash}]</sub>"
+    "<sub>[**V**:{version}, **R**:{rule}, **F**:{fhash}]</sub>"
 )

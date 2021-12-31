@@ -12,28 +12,20 @@ import jmespath
 from stacs.integration.constants import PATH_SEPARATOR
 
 
-def finding_suppressed(finding: Dict[str, Any]) -> bool:
-    """Checks whether a finding is suppressed."""
-    suppressions = finding.get("suppressions", [])
+def string_difference(first: str, second: str):
+    """Returns the portion of the first string which is not present in the second."""
+    difference = str()
 
-    if not suppressions:
-        return False
+    for index, char in enumerate(list(first)):
+        try:
+            if char == second[index]:
+                continue
+            else:
+                difference += char
+        except IndexError:
+            difference += char
 
-    # Findings may be listed as suppressed but with a status of 'rejected', 'accepted',
-    # or 'underReview'. If the suppression isn't 'accepted' then we'll still annotate.
-    for suppression in suppressions:
-        if suppression.get("status", str()).lower() != "accepted":
-            return False
-
-    return True
-
-
-def has_parent(artifact: int, artifacts: List[Dict[str, Any]]) -> bool:
-    """Checks whether the given artifact has a parent, indicating it is an archive."""
-    if artifacts[artifact].get("parentIndex") is not None:
-        return True
-
-    return False
+    return difference
 
 
 def get_virtual_path(artifact: int, artifacts: List[Dict[str, Any]]) -> str:
@@ -46,47 +38,6 @@ def get_virtual_path(artifact: int, artifacts: List[Dict[str, Any]]) -> str:
         full_path = f"{parent_path}{PATH_SEPARATOR}{full_path}"
 
     return full_path
-
-
-def get_stacs_version(tool: Dict[str, Any]) -> str:
-    """Returns the current STACS version from the tool section of the SARIF document."""
-    version = jmespath.search("driver.version", tool)
-    if not version:
-        return "Unknown"
-
-    return version
-
-
-def get_rule_description(rule: str, tool: Dict[str, Any]) -> str:
-    """Returns a normalised plain-text description for a given rule id."""
-    rules = jmespath.search("driver.rules", tool)
-    if not rules:
-        return "unknown"
-
-    for candidate in rules:
-        if candidate.get("id") == rule:
-            # Strip proceeding capital letter and trailing full-stop, if present.
-            raw = jmespath.search("shortDescription.text", candidate)
-            description = str()
-
-            for index, char in enumerate(list(raw)):
-                description += char
-                if index == 0:
-                    description = description.lower()
-
-            return description.rstrip(".")
-
-    return "unknown"
-
-
-def get_finding_hash(finding: Dict[str, Any], artifacts: List[Dict[str, Any]]) -> str:
-    """Generates a hash for the finding for use in de-duplicating comments."""
-    artifact_index = get_artifact_index(finding=finding)
-    filename = get_virtual_path(artifact=artifact_index, artifacts=artifacts)
-    offset = get_offset(finding=finding)
-    rule = get_rule_id(finding=finding)
-
-    return hashlib.sha1(bytes(f"{filename}.{offset}.{rule}", "utf-8")).hexdigest()
 
 
 def get_file_tree(filename: str) -> str:
@@ -106,6 +57,11 @@ def get_file_tree(filename: str) -> str:
 def get_rule_id(finding: Dict[str, Any]) -> str:
     """Returns the rule identifier for a given finding."""
     return jmespath.search("ruleId", finding)
+
+
+def get_original_base_uri(run: Dict[str, Any]) -> str:
+    """Returns the original base URI (SRCROOT) for a given run."""
+    return jmespath.search("originalUriBaseIds.SRCROOT.uri", run)
 
 
 def get_filename(finding: Dict[str, Any]) -> str:
@@ -161,14 +117,14 @@ def get_start_line(finding: Dict[str, Any]) -> int:
         return 0
 
 
-def get_suppression(filename: str):
+def generate_suppression(filepath: str):
     """Generate an example suppression document for the given file."""
     return json.dumps(
         {
             "include": [],
             "ignore": [
                 {
-                    "pattern": f"{re.escape(filename)}$",
+                    "pattern": f"{re.escape(filepath)}$",
                     "reason": "A reason for this suppression",
                 }
             ],

@@ -5,6 +5,7 @@ SPDX-License-Identifier: BSD-3-Clause
 
 
 import argparse
+import hashlib
 import json
 import logging
 import os
@@ -20,6 +21,7 @@ from stacs.integration.github.constants import (
     NESTED_COMMENT_TEMPLATE,
     PATTERN_FHASH,
 )
+from stacs.integration.models import SARIF
 
 
 def validate_environment() -> List[str]:
@@ -40,44 +42,20 @@ def validate_environment() -> List[str]:
     return missing
 
 
-def get_position_in_diff(
-    finding: Dict[str, Any],
+def position_in_diff(
+    filepath: str,
+    line: int,
     changes: Dict[str, Dict[int, diff.Hunk]],
-    artifacts: Dict[str, Any],
 ) -> int:
     """Determine the position that the comment needs to be added in the diff."""
-    filename = helpers.get_filename(finding)
-    artifact = helpers.get_artifact_index(finding)
-    comment_location = 0
-
-    # If there is no line-number, the finding is very likely inside of a binary. Github
-    # does not allow review comments on binaries, so we'll need to just add a regular
-    # review comment.
-    #
-    # This should also take care of nested files, as all archive formats will be binary,
-    # which prevents the need for an additional check here.
-    line = helpers.get_start_line(finding)
-    if not line:
-        raise exceptions.ChangeNotInDiffException()
-
-    # Check whether this finding has a parent, which would indicate that it is from a
-    # file inside of an archive - so it won't be present in the diff directly.
-    if helpers.has_parent(artifact, artifacts):
-        raise exceptions.ChangeNotInDiffException()
-
-    # Check that the finding is inside a file present in the diff. A finding may be in
-    # a file which was not modified as part ofthis pull-request, in which case a regular
-    # comment will be added once again, as Github won't let us annotate a file outside
-    # of this pull request.
-    if filename not in changes:
-        raise exceptions.ChangeNotInDiffException()
+    position = 0
 
     # Check that the finding is present in a hunk which is part of this pull-request. A
     # finding may already be in a file modified in this pull-request, but not in one of
     # the locations which was modified. In this case, once again, a regular comment
     # will be added as we cannot annotate part of the file which was not modified by
     # this pull-request.
-    for start, change in changes[filename].items():
+    for start, change in changes[filepath].items():
         # Determine the last line number of this hunk by counting all additions and
         # existing lines, but ignoring removals.
         position = int(start)
@@ -91,18 +69,31 @@ def get_position_in_diff(
             # Track the line number relative to the first diff hunk of this file - which
             # is the required offset to add a comment via the Github API.
             if line == position:
-                comment_location = offset + (index + 1)
+                position = offset + (index + 1)
 
-        # If we already have a matching location, break out of the loop early.
-        if comment_location:
-            break
+        # If we already have a matching location, return it.
+        if position:
+            return position
 
-    # If we don't have a location, it's likely that the change was already inside of the
-    # file, so we'll just add a regular pull-request comment.
-    if not comment_location:
-        raise exceptions.ChangeNotInDiffException()
+    raise exceptions.ChangeNotInDiffException()
 
-    return comment_location
+
+def generate_fhash(filename: str, offset: int, rule: str) -> str:
+    """Generates a finding hash for use in de-duplicating comments."""
+    # TODO: Use virtual path.
+    return hashlib.sha1(bytes(f"{filename}.{offset}.{rule}", "utf-8")).hexdigest()
+
+
+def parse_fhashes_from_comments(comments: List[str]) -> List[str]:
+    """Parses a list of finding hashes (fhashes) from existing comments."""
+    fhashes = []
+
+    for comment in comments:
+        fhash = re.search(PATTERN_FHASH, comment)
+        if fhash:
+            fhashes.append(fhash.group(1))
+
+    return fhashes
 
 
 def main():
@@ -110,7 +101,14 @@ def main():
     parser = argparse.ArgumentParser(
         description="Annotates Github pull requests with STACS unsuppressed findings."
     )
-    parser.add_argument("sarif", help="Path to the SARIF file to process")
+    parser.add_argument(
+        "sarif",
+        help="Path to the SARIF file to process",
+    )
+    parser.add_argument(
+        "--uri-base-id",
+        help="The absolute path of the directory the scan was executed from",
+    )
     arguments = parser.parse_args()
 
     logging.basicConfig(
@@ -120,27 +118,26 @@ def main():
     log = logging.getLogger(__name__)
 
     # Ensure the environment is as we expect (running in Github actions).
-    missing_env = validate_environment()
-
-    if missing_env:
+    missing_context = validate_environment()
+    if missing_context:
         log.fatal(
             "Required environment variables are missing cannot continue: "
-            f"{','.join(missing_env)}"
+            f"{','.join(missing_context)}"
         )
-        sys.exit(2)
-
-    # Read in the input SARIF file.
-    try:
-        with open(os.path.abspath(os.path.expanduser(arguments.sarif)), "r") as fin:
-            sarif = json.load(fin)
-    except (OSError, JSONDecodeError) as err:
-        log.fatal(err)
-        sys.exit(3)
+        sys.exit(1)
 
     # Perform a cheap check whether the trigger was a pull request.
     if "/pull/" not in os.environ["GITHUB_REF"]:
         log.info("Trigger does not appear to be a pull request, exiting.")
         sys.exit(0)
+
+    # Read in the input SARIF file.
+    try:
+        with open(os.path.abspath(os.path.expanduser(arguments.sarif)), "r") as fin:
+            sarif = SARIF(json.load(fin))
+    except (OSError, JSONDecodeError) as err:
+        log.fatal(err)
+        sys.exit(2)
 
     # Setup a Github API client.
     github = Client(
@@ -148,7 +145,7 @@ def main():
         token=os.environ["GITHUB_TOKEN"],
     )
 
-    # Fetch and parse the diff from Github.
+    # Fetch and parse the pull-request diff from Github.
     try:
         changes = diff.parse(
             github.get_pull_request_diff(
@@ -180,124 +177,88 @@ def main():
         sys.exit(3)
 
     # Parse finding hashes (fhahes) from existing review and issue comments.
-    existing_findings = []
-
-    for comment in comments:
-        fhash = re.search(PATTERN_FHASH, comment)
-        if fhash:
-            existing_findings.append(fhash.group(1))
+    fhashes = parse_fhashes_from_comments(comments)
 
     # Roll over the findings and add a comment if they are not suppressed.
-    for run in sarif.get("runs", []):
-        tool = run.get("tool", [])
-        artifacts = run.get("artifacts", [])
-        version = helpers.get_stacs_version(tool=tool)
+    for run in sarif.runs:
+        rules = run.tool.rules
+        artifacts = run.artifacts
 
-        # TODO: We should deserialise the results ('findings') into a model, and use
-        # properties to access all of the required attributes, rather than needing lots
-        # of get_* helpers.
-        for result in run.get("results"):
-            if helpers.finding_suppressed(result):
+        for finding in run.findings:
+            if finding.suppressed:
                 continue
 
-            # Extract data from the finding required for this comment.
-            line = helpers.get_start_line(finding=result)
-            hash = helpers.get_finding_hash(finding=result, artifacts=artifacts)
-            rule = helpers.get_rule_id(finding=result)
-            sample = helpers.get_sample(finding=result)
-            offset = helpers.get_offset(finding=result)
-            filename = helpers.get_filename(finding=result)
-            suppression = helpers.get_suppression(filename=filename)
-            description = helpers.get_rule_description(rule=rule, tool=tool)
-            artifact_index = helpers.get_artifact_index(finding=result)
-            virtual_path = helpers.get_virtual_path(
-                artifact=artifact_index,
-                artifacts=artifacts,
-            )
+            # Get the rule object from the tool rules.
+            rule = None
+            for candidate in rules:
+                if finding.rule == candidate.id:
+                    rule = candidate
 
-            # Skip adding a comment if one already exists.
-            if hash in existing_findings:
-                log.info(
-                    f"Skipping comment for finding, as hash for finding {hash} already "
-                    "exists."
-                )
+            # Generate a finding hash, and see if this finding already has a comment.
+            fhash = generate_fhash(finding.filepath, finding.offset, finding.rule)
+            if fhash in fhashes:
+                log.info(f"Found comment for finding with fhash {fhash}, skipping")
                 continue
 
-            # Offsets for binaries are in bytes, where text is in lines.
-            if line:
-                location = f"line `{line}`"
-            else:
-                location = f"{offset}-bytes"
-
-            # Calculate the position in the diff to add the review comment, and add it.
-            try:
-                position = get_position_in_diff(
-                    finding=result,
-                    changes=changes,
-                    artifacts=artifacts,
-                )
+            # Only calculate the position in the diff if the file is both directly in
+            # the repository (not inside an archive), and is text. We can check if the
+            # finding has a line number to quickly check if the finding is inside a
+            # binary.
+            if finding.line and not artifacts[finding.artifact].parent:
+                position = position_in_diff(finding.filepath, finding.line, changes)
 
                 github.add_pull_request_review_comment(
                     repository=os.environ["GITHUB_REPOSITORY"],
                     reference=os.environ["GITHUB_REF"],
                     comment=FILE_COMMENT_TEMPLATE.format(
-                        location=location,
-                        sample=sample,
-                        filename=filename,
-                        rule=rule,
-                        description=description,
-                        suppression=suppression,
-                        hash=hash,
-                        version=version,
+                        location=finding.location,
+                        sample=finding.sample,
+                        filename=finding.filepath,
+                        rule=rule.id,
+                        description=rule.description,
+                        suppression=helpers.generate_suppression(finding.filepath),
+                        fhash=fhash,
+                        version=run.tool.version,
                     ),
-                    filepath=filename,
+                    filepath=finding.filepath,
                     position=position,
                     commit=os.environ["GITHUB_SHA"],
                 )
-
                 continue
-            except exceptions.ChangeNotInDiffException:
-                # If the file changed wasn't in the diff, then we'll need to add a
-                # regular comment.
-                log.warning(
-                    "Finding does not appear in the current diff, adding regular "
-                    "comment to pull-request"
-                )
 
-            # If the finding is inside of an archive, show the filename as a tree,
-            # rather than a single file name.
-            if helpers.has_parent(artifact=artifact_index, artifacts=artifacts):
+            # Check if the finding is inside of an archive, and if so, generate a file
+            # tree for easier location.
+            if artifacts[finding.artifact].parent:
                 github.add_issue_comment(
                     repository=os.environ["GITHUB_REPOSITORY"],
                     reference=os.environ["GITHUB_REF"],
                     comment=NESTED_COMMENT_TEMPLATE.format(
-                        location=location,
-                        sample=sample,
-                        filename=filename,
-                        tree=helpers.get_file_tree(filename=virtual_path),
-                        rule=rule,
-                        description=description,
-                        suppression=suppression,
-                        hash=hash,
-                        version=version,
+                        location=finding.location,
+                        sample=finding.sample,
+                        filename=finding.filepath,
+                        tree=None,
+                        rule=rule.id,
+                        description=rule.description,
+                        suppression=helpers.generate_suppression(finding.filepath),
+                        fhash=fhash,
+                        version=run.tool.version,
                     ),
                 )
                 continue
 
-            # Otherwise, the finding is likely directly in a binary which is in the
-            # repository.
+            # Otherwise, the finding is likely in a binary directly in the repository.
             github.add_issue_comment(
                 repository=os.environ["GITHUB_REPOSITORY"],
                 reference=os.environ["GITHUB_REF"],
                 comment=FILE_COMMENT_TEMPLATE.format(
-                    location=location,
-                    sample=sample,
-                    filename=filename,
-                    rule=rule,
-                    description=description,
-                    suppression=suppression,
-                    hash=hash,
-                    version=version,
+                    location=finding.location,
+                    sample=finding.sample,
+                    filename=finding.filepath,
+                    rule=rule.id,
+                    description=rule.description,
+                    suppression=helpers.generate_suppression(finding.filepath),
+                    fhash=fhash,
+                    version=run.tool.version,
                 ),
             )
 
