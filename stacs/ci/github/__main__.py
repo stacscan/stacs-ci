@@ -2,7 +2,7 @@
 import argparse
 import logging
 
-from stacs.integration.github import pr
+from stacs.ci.github import pr
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

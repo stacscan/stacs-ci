@@ -1,4 +1,4 @@
-"""STACS Integration Exceptions.
+"""STACS CI Exceptions.
 
 SPDX-License-Identifier: BSD-3-Clause
 """

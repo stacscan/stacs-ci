@@ -1,14 +1,15 @@
 """Provides a generic entrypoint for the STACS Github integration. """
+
 import argparse
 import logging
 
-from stacs.integration.generic import fail
+from stacs.ci.generic import fail
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=(
-            "STACS generic integration: Exits with non-zero status if any unsuppressed "
-            "findings are present in the input SARIF document."
+            "STACS CI generic integration: Exits with non-zero status if any "
+            "unsuppressed findings are present in the input SARIF document."
         )
     )
     parser.add_argument(

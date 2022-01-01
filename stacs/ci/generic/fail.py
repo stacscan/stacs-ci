@@ -7,15 +7,13 @@ any non-suppresssed findings.
 import json
 import logging
 import os
-import pprint
 import sys
 from json.decoder import JSONDecodeError
 
 from colorama import Fore, init
-from colorama.ansi import Style
-from stacs.integration import constants, helpers
-from stacs.integration.__about__ import __version__
-from stacs.integration.models import SARIF
+from stacs.ci import constants, helpers
+from stacs.ci.__about__ import __version__
+from stacs.ci.models import SARIF
 
 
 def main(sarif_file: str, prefix: str = None):

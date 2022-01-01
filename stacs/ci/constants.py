@@ -1,4 +1,4 @@
-"""Define constants commonly used throughout STACS Integrations.
+"""Define constants commonly used throughout STACS CI.
 
 SPDX-License-Identifier: BSD-3-Clause
 """

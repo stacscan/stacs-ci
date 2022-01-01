@@ -8,15 +8,16 @@ stacs \
 
 # Run the Github integration.
 if [ "${SCAN_SUBDIR}x" != "x" ]; then
-    python3 -m stacs.integration.github /tmp/stacs.sarif --prefix "${SCAN_SUBDIR}"
+    python3 -m stacs.ci.github /tmp/stacs.sarif --prefix "${SCAN_SUBDIR}"
 else
-    python3 -m stacs.integration.github /tmp/stacs.sarif
+    python3 -m stacs.ci.github /tmp/stacs.sarif
 fi
 
-# Fail the build if requested.
+# Fail the build on unsuppressed finding, if requested.
 STATUS=$?
+FAIL_BUILD="$(echo ${FAIL_BUILD} | tr '[A-Z]' '[a-z]')"
 
-if [ "${FAIL_BUILD}x" != "x" ]; then
+if [ "${FAIL_BUILD}" == "true" ]; then
     exit $STATUS
 else
     exit 0

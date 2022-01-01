@@ -4,12 +4,12 @@ import json
 import os
 import unittest
 
-from stacs.integration import exceptions
-from stacs.integration.github import pr
-from stacs.integration.models import SARIF, Finding
+from stacs.ci import exceptions
+from stacs.ci.github import pr
+from stacs.ci.models import SARIF
 
 
-class STACSIntegrationGithubPullRequest(unittest.TestCase):
+class STACSCIGithubPullRequest(unittest.TestCase):
     """Tests the Github Pull Request integration."""
 
     def setUp(self):

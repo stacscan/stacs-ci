@@ -1,4 +1,4 @@
-"""Models used by STACS integrations.
+"""Models used by STACS CI.
 
 SPDX-License-Identifier: BSD-3-Clause
 """
@@ -6,8 +6,8 @@ SPDX-License-Identifier: BSD-3-Clause
 from typing import Any, Dict, List
 
 import jmespath
-from stacs.integration.exceptions import NoParentException
-from stacs.integration.helpers import normalise_string
+from stacs.ci.exceptions import NoParentException
+from stacs.ci.helpers import normalise_string
 
 
 class SARIFObject:

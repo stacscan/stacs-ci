@@ -3,10 +3,10 @@
 import os
 import unittest
 
-from stacs.integration import diff
+from stacs.ci import diff
 
 
-class STACSIntegrationDiff(unittest.TestCase):
+class STACSCIDiff(unittest.TestCase):
     """Tests the Github Pull Request integration."""
 
     def setUp(self):

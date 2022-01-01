@@ -6,8 +6,8 @@ SPDX-License-Identifier: BSD-3-Clause
 from typing import Dict, List
 
 import requests
-from stacs.integration import exceptions
-from stacs.integration.github.constants import DEFAULT_API_URI
+from stacs.ci import exceptions
+from stacs.ci.github.constants import DEFAULT_API_URI
 
 
 class Client:

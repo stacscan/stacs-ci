@@ -9,7 +9,7 @@
     <br />
     <b>Static Token And Credential Scanner</b>
     <br />
-    <i>CI</i>
+    <i>CI Integrations</i>
     <br />
 </p>
 
@@ -62,6 +62,17 @@ allowing consumers to ignore known false positives - such as test fixtures.
 
 Defaults to `true`
 
+##### `pull-request`
+
+Defines whether the Action is executing in a pull-request. This is used to instruct
+STACS to output findings to the console, rather than adding comments to a pull-request.
+
+This is especially useful for Github Actions running in response to a new release being
+created. Allowing binaries, such as Docker containers and system packages, to be scanned
+before publishing, failing the build if credentials are detected.
+
+Defaults to `true`
+
 #### Example Usage
 
 The following example scans the currently checked out commit and uploads the findings
@@ -90,6 +101,16 @@ with:
     fail-build: false
 ```
 
+The following example would scan a sub-directory in the repository, and print any
+findings to the console, rather than adding pull-request comments:
+
+```yaml
+uses: actions/stacscan@v1
+with:
+    scan-directory: 'binaries/'
+    pull-request: false
+```
+
 #### Permissions
 
 Please be aware that in order to annotate pull-requests with comments, the action must
@@ -101,3 +122,38 @@ permissions:
     contents: read         # Required to read the repository contents (checkout).
     pull-requests: write   # Required to annotate pull requests with comments.
 ```
+
+### Generic CI
+
+This repository can be integrated with a number of common CI systems using the provided
+Docker image, or Python module.
+
+The pre-built Docker image greatly simplifies this process and provides a mechanism to
+quickly execute a STACS scan against a given directory, print the results in an
+actionable manner, and signal to the CI system that the build should fail on findings.
+
+#### Basic
+
+The simpliest form of executing the Generic CI integration can be performed using the
+following Docker command from the directory to be scanned. Using this default
+configuration Docker will complete with a non-zero exit code if any unsupressed findings
+are found:
+
+```bash
+docker run -it --mount type=bind,source=$(pwd),target=/mnt/stacs/input stacscan/stacs-ci:latest
+```
+
+To prevent a non-zero exit code on unsupressed findings, such as for initial 'dry run'
+style operation, the following command can be run:
+
+```bash
+docker run -it -e FAIL_BUILD=false --mount type=bind,source=$(pwd),target=/mnt/stacs/input stacscan/stacs-ci:latest
+```
+
+#### Jenkins
+
+_To be added._
+
+#### Circle CI
+
+_To be added._

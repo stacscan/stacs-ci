@@ -6,7 +6,7 @@ SPDX-License-Identifier: BSD-3-Clause
 import re
 from typing import Dict, TypedDict
 
-from stacs.integration.constants import PATTERN_GIT_DIFF_HEADER, PATTERN_GIT_DIFF_HUNK
+from stacs.ci.constants import PATTERN_GIT_DIFF_HEADER, PATTERN_GIT_DIFF_HUNK
 
 
 class Hunk(TypedDict):

@@ -15,7 +15,7 @@ __version__ = None
 
 about_file = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
-    "stacs/integration/__about__.py",
+    "stacs/ci/__about__.py",
 )
 exec(open(about_file).read())
 
@@ -23,7 +23,7 @@ exec(open(about_file).read())
 setup(
     name=__title__,
     setup_requires="setupmeta",
-    description="Static Token And Credential Scanner Integrations.",
+    description="Static Token And Credential Scanner CI Integrations.",
     packages=find_namespace_packages(include=["stacs.*"]),
     url=__uri__,
     version=__version__,

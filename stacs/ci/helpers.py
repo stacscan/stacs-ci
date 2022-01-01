@@ -1,4 +1,4 @@
-"""Helpers used by multiple STACS integrations.
+"""Helpers used by multiple STACS CI.
 
 SPDX-License-Identifier: BSD-3-Clause
 """
@@ -9,11 +9,14 @@ import re
 from typing import List
 
 import colorama
-from stacs.integration.constants import PATH_SEPARATOR, PATTERN_FHASH
-from stacs.integration.exceptions import NoParentException
+from stacs.ci.constants import PATH_SEPARATOR, PATTERN_FHASH
+from stacs.ci.exceptions import NoParentException
 
 
-def generate_virtual_path(finding: "Finding", artifacts: "List[Artifact]"):
+def generate_virtual_path(
+    finding: "Finding",  # noqa: F821
+    artifacts: "List[Artifact]",  # noqa: F821
+):
     """Generate a virtual path for an input file."""
     virtual_path = finding.filepath
 

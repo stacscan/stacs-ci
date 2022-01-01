@@ -10,13 +10,10 @@ import sys
 from json.decoder import JSONDecodeError
 from typing import Dict, List
 
-from stacs.integration import diff, exceptions, helpers
-from stacs.integration.github.client import Client
-from stacs.integration.github.constants import (
-    FILE_COMMENT_TEMPLATE,
-    NESTED_COMMENT_TEMPLATE,
-)
-from stacs.integration.models import SARIF
+from stacs.ci import diff, exceptions, helpers
+from stacs.ci.github.client import Client
+from stacs.ci.github.constants import FILE_COMMENT_TEMPLATE, NESTED_COMMENT_TEMPLATE
+from stacs.ci.models import SARIF
 
 
 def validate_environment() -> List[str]:

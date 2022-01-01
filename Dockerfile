@@ -1,5 +1,8 @@
 FROM stacscan/stacs:latest
 
+# Default environment variables.
+ENV FAIL_BUILD=true
+
 # Allow build-time specification of version.
 ARG VERSION
 
