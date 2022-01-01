@@ -1,0 +1,294 @@
+{
+    "version": "2.1.0",
+    "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0.json",
+    "runs": [
+        {
+            "tool": {
+                "driver": {
+                    "name": "STACS",
+                    "rules": [
+                        {
+                            "id": "CredentialHashMD5",
+                            "shortDescription": {
+                                "text": "File contains an MD5 crypt hash which may be a credential."
+                            }
+                        },
+                        {
+                            "id": "CredentialHashBcrypt",
+                            "shortDescription": {
+                                "text": "File contains an bcrypt hash which may be a credential."
+                            }
+                        },
+                        {
+                            "id": "CredentialCloudAWSAccessKey",
+                            "shortDescription": {
+                                "text": "Potential AWS access key found."
+                            }
+                        },
+                        {
+                            "id": "CredentialPKIPEMRSA",
+                            "shortDescription": {
+                                "text": "Potential PEM format RSA private key found."
+                            }
+                        },
+                        {
+                            "id": "CredentialSaaSGithubToken",
+                            "shortDescription": {
+                                "text": "Potential Github API token found."
+                            }
+                        }
+                    ],
+                    "version": "0.4.1",
+                    "downloadUri": "https://www.github.com/stacscan/stacs/",
+                    "informationUri": "https://www.github.com/stacscan/stacs/"
+                }
+            },
+            "results": [
+                {
+                    "message": {
+                        "text": "File contains an MD5 crypt hash which may be a credential."
+                    },
+                    "level": "error",
+                    "ruleId": "CredentialHashMD5",
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "region": {
+                                    "byteOffset": 26,
+                                    "snippet": {
+                                        "text": "$1$znwWbYub$3dR.11oVhKjtaOiqCt8V4."
+                                    },
+                                    "startLine": 3
+                                },
+                                "contextRegion": {
+                                    "snippet": {
+                                        "text": "s a file.\n\nHash is `$1$znwWbYub$3dR.11oVhKjtaOiqCt8V4.`\n\n\nWhoops. I added "
+                                    }
+                                },
+                                "artifactLocation": {
+                                    "uri": "example_more.txt",
+                                    "index": 0,
+                                    "uriBaseId": "STACSROOT"
+                                }
+                            }
+                        }
+                    ],
+                    "suppressions": []
+                },
+                {
+                    "message": {
+                        "text": "File contains an bcrypt hash which may be a credential."
+                    },
+                    "level": "error",
+                    "ruleId": "CredentialHashBcrypt",
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "region": {
+                                    "byteOffset": 8200,
+                                    "snippet": {
+                                        "binary": "JDJiJDEyJHE2WDRlQTQvQW1sNTN4Z0E4YmZNZS5pNllMVnFvbTlhaHBKejMxUjhxbjMzWk1BMmloLjM2"
+                                    }
+                                },
+                                "contextRegion": {
+                                    "snippet": {
+                                        "binary": "AAAAAAAAAAAAAAAAAQACAAAAAAAkMmIkMTIkcTZYNGVBNC9BbWw1M3hnQThiZk1lLmk2WUxWcW9tOWFocEp6MzFSOHFuMzNaTUEyaWguMzYAAAAAARsDO0QAAAAHAAAA2O///w=="
+                                    }
+                                },
+                                "artifactLocation": {
+                                    "uri": "bcrypt",
+                                    "index": 1,
+                                    "uriBaseId": "STACSROOT"
+                                }
+                            }
+                        }
+                    ],
+                    "suppressions": []
+                },
+                {
+                    "message": {
+                        "text": "Potential AWS access key found."
+                    },
+                    "level": "error",
+                    "ruleId": "CredentialCloudAWSAccessKey",
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "region": {
+                                    "byteOffset": 84,
+                                    "snippet": {
+                                        "text": "=AKIAZJ3PDTI2R9JLXCTH\n"
+                                    },
+                                    "startLine": 3
+                                },
+                                "contextRegion": {
+                                    "snippet": {
+                                        "text": "?\n\naws_access_key_id=AKIAZJ3PDTI2R9JLXCTH\naws_secret_key_id=39"
+                                    }
+                                },
+                                "artifactLocation": {
+                                    "uri": "example.txt",
+                                    "index": 2,
+                                    "uriBaseId": "STACSROOT"
+                                }
+                            }
+                        }
+                    ],
+                    "suppressions": []
+                },
+                {
+                    "message": {
+                        "text": "File contains an MD5 crypt hash which may be a credential."
+                    },
+                    "level": "error",
+                    "ruleId": "CredentialHashMD5",
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "region": {
+                                    "byteOffset": 26,
+                                    "snippet": {
+                                        "text": "$1$znwWbYub$3dR.11oVhKjtaOiqCt8V4."
+                                    },
+                                    "startLine": 3
+                                },
+                                "contextRegion": {
+                                    "snippet": {
+                                        "text": "s a file.\n\nHash is `$1$znwWbYub$3dR.11oVhKjtaOiqCt8V4.`\n\n\nWhoops. I added "
+                                    }
+                                },
+                                "artifactLocation": {
+                                    "uri": "example_more.txt",
+                                    "index": 4,
+                                    "uriBaseId": "STACSROOT"
+                                }
+                            }
+                        }
+                    ],
+                    "suppressions": []
+                },
+                {
+                    "message": {
+                        "text": "Potential PEM format RSA private key found."
+                    },
+                    "level": "error",
+                    "ruleId": "CredentialPKIPEMRSA",
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "region": {
+                                    "byteOffset": 46,
+                                    "snippet": {
+                                        "text": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA1grlj7tI6e26pvuxUNAgHUqcC2suGxdSUnF8dr5Y+EUjQCzp"
+                                    },
+                                    "startLine": 5
+                                },
+                                "contextRegion": {
+                                    "snippet": {
+                                        "text": "s a weird offset.\n\n\n-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA1grlj7tI6e26pvuxUNAgHUqcC2suGxdSUnF8dr5Y+EUjQCzp\n8DntD32lkE2AzRKr7kI"
+                                    }
+                                },
+                                "artifactLocation": {
+                                    "uri": "example_two.txt",
+                                    "index": 5,
+                                    "uriBaseId": "STACSROOT"
+                                }
+                            }
+                        }
+                    ],
+                    "suppressions": []
+                },
+                {
+                    "message": {
+                        "text": "Potential Github API token found."
+                    },
+                    "level": "error",
+                    "ruleId": "CredentialSaaSGithubToken",
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "region": {
+                                    "byteOffset": 3642,
+                                    "snippet": {
+                                        "text": "ghp_YWNjb3VudHMyM3JkZnNkZnNkZnNkZnNkZnNk"
+                                    },
+                                    "startLine": 60
+                                },
+                                "contextRegion": {
+                                    "snippet": {
+                                        "text": "et faucibus lacus.\n\nghp_YWNjb3VudHMyM3JkZnNkZnNkZnNkZnNkZnNk\n\n"
+                                    }
+                                },
+                                "artifactLocation": {
+                                    "uri": "example_two.txt",
+                                    "index": 5,
+                                    "uriBaseId": "STACSROOT"
+                                }
+                            }
+                        }
+                    ],
+                    "suppressions": []
+                }
+            ],
+            "artifacts": [
+                {
+                    "location": {
+                        "uri": "example_more.txt",
+                        "uriBaseId": "STACSROOT"
+                    },
+                    "hashes": {
+                        "md5": "12e6faf813f3b2696f7df2e353683357"
+                    }
+                },
+                {
+                    "location": {
+                        "uri": "bcrypt",
+                        "uriBaseId": "STACSROOT"
+                    },
+                    "hashes": {
+                        "md5": "dcc050e391bbb913d2374312098f7d3e"
+                    }
+                },
+                {
+                    "location": {
+                        "uri": "example.txt",
+                        "uriBaseId": "STACSROOT"
+                    },
+                    "hashes": {
+                        "md5": "cb0fe2bcdc4e70b6ecfad442198eafa0"
+                    }
+                },
+                {
+                    "location": {
+                        "uri": "example.zip",
+                        "uriBaseId": "STACSROOT"
+                    }
+                },
+                {
+                    "location": {
+                        "uri": "example_more.txt",
+                        "uriBaseId": "STACSROOT"
+                    },
+                    "parentIndex": 3,
+                    "hashes": {
+                        "md5": "12e6faf813f3b2696f7df2e353683357"
+                    }
+                },
+                {
+                    "location": {
+                        "uri": "example_two.txt",
+                        "uriBaseId": "STACSROOT"
+                    },
+                    "hashes": {
+                        "md5": "659d0f31a464345128319d3a0a9f3e9f"
+                    }
+                }
+            ],
+            "originalUriBaseIds": {
+                "STACSROOT": {
+                    "uri": "file:///home/darkarnium/code/stacs/example/"
+                }
+            }
+        }
+    ]
+}

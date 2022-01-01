@@ -1,5 +1,5 @@
-[![Shield](https://img.shields.io/docker/pulls/stacscan/stacs?style=flat-square)](https://hub.docker.com/r/stacscan/stacs)
-[![Shield](https://img.shields.io/docker/image-size/stacscan/stacs?style=flat-square)](https://hub.docker.com/r/stacscan/stacs/tags?page=1&ordering=last_updated)
+[![Shield](https://img.shields.io/docker/pulls/stacscan/stacs-ci?style=flat-square)](https://hub.docker.com/r/stacscan/stacs-ci)
+[![Shield](https://img.shields.io/docker/image-size/stacscan/stacs-ci?style=flat-square)](https://hub.docker.com/r/stacscan/stacs-ci/tags?page=1&ordering=last_updated)
 [![Shield](https://img.shields.io/twitter/follow/stacscan?style=flat-square)](https://twitter.com/stacscan)
 <p align="center">
     <br /><br />
@@ -9,7 +9,7 @@
     <br />
     <b>Static Token And Credential Scanner</b>
     <br />
-    <i>Integrations</i>
+    <i>CI Integrations</i>
     <br />
 </p>
 
@@ -19,6 +19,12 @@ This repository contains a set of modules to enable integration of STACS with co
 used CI / CD systems. Currently, this repository supports:
 
 * Github Actions
+  * Fails the build on findings.
+  * Automatically annotates pull-requests with findings
+
+* Generic CI Systems
+  * Fails the build on findings.
+  * Outputs findings to the console in formatted plain-text.
 
 STACS is a [YARA](https://virustotal.github.io/yara/) powered static credential scanner
 which suports source code, binary file formats, analysis of nested archives, composable
@@ -56,6 +62,17 @@ allowing consumers to ignore known false positives - such as test fixtures.
 
 Defaults to `true`
 
+##### `pull-request`
+
+Defines whether the Action is executing in a pull-request. This is used to instruct
+STACS to output findings to the console, rather than adding comments to a pull-request.
+
+This is especially useful for Github Actions running in response to a new release being
+created. Allowing binaries, such as Docker containers and system packages, to be scanned
+before publishing, failing the build if credentials are detected.
+
+Defaults to `true`
+
 #### Example Usage
 
 The following example scans the currently checked out commit and uploads the findings
@@ -65,8 +82,9 @@ as security events to Github (see "Permissions" section below).
 uses: actions/stacscan@v1
 ```
 
-The following example scans a directory (`binaries/`) which contains binary objects,
-compiled for release by another step of a Github actions pipeline.
+The following example scans a sub-directory in the repository. In this example the 
+`binaries/` sub-directory contains binary objects, compiled for release by another step
+of a Github actions pipeline.
 
 ```yaml
 uses: actions/stacscan@v1
@@ -75,12 +93,22 @@ with:
 ```
 
 The following example disables 'failing the build' if there are findings which have not
-been ignore / suppressed.
+been ignored / suppressed.
 
 ```yaml
 uses: actions/stacscan@v1
 with:
     fail-build: false
+```
+
+The following example would scan a sub-directory in the repository, and print any
+findings to the console, rather than adding pull-request comments:
+
+```yaml
+uses: actions/stacscan@v1
+with:
+    scan-directory: 'binaries/'
+    pull-request: false
 ```
 
 #### Permissions
@@ -94,3 +122,38 @@ permissions:
     contents: read         # Required to read the repository contents (checkout).
     pull-requests: write   # Required to annotate pull requests with comments.
 ```
+
+### Generic CI
+
+This repository can be integrated with a number of common CI systems using the provided
+Docker image, or Python module.
+
+The pre-built Docker image greatly simplifies this process and provides a mechanism to
+quickly execute a STACS scan against a given directory, print the results in an
+actionable manner, and signal to the CI system that the build should fail on findings.
+
+#### Basic
+
+The simpliest form of executing the Generic CI integration can be performed using the
+following Docker command from the directory to be scanned. Using this default
+configuration Docker will complete with a non-zero exit code if any unsupressed findings
+are found:
+
+```bash
+docker run -it --mount type=bind,source=$(pwd),target=/mnt/stacs/input stacscan/stacs-ci:latest
+```
+
+To prevent a non-zero exit code on unsupressed findings, such as for initial 'dry run'
+style operation, the following command can be run:
+
+```bash
+docker run -it -e FAIL_BUILD=false --mount type=bind,source=$(pwd),target=/mnt/stacs/input stacscan/stacs-ci:latest
+```
+
+#### Jenkins
+
+_To be added._
+
+#### Circle CI
+
+_To be added._
