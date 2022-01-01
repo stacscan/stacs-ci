@@ -6,7 +6,8 @@ SPDX-License-Identifier: BSD-3-Clause
 from typing import Any, Dict, List
 
 import jmespath
-from stacs.integration.helpers import string_difference
+from stacs.integration.exceptions import NoParentException
+from stacs.integration.helpers import normalise_string, string_difference
 
 
 class SARIFObject:
@@ -62,14 +63,12 @@ class Finding(SARIFObject):
     @property
     def offset(self):
         """Returns the byte offset of the finding."""
-        return int(self.by_path("locations[0].physicalLocation.region.byteOffset", 0))
+        return int(self.by_path("locations[0].physicalLocation.region.byteOffset"))
 
     @property
     def artifact(self):
         """Returns the artifact index of the finding."""
-        return int(
-            self.by_path("locations[0].physicalLocation.artifactLocation.index", 0)
-        )
+        return int(self.by_path("locations[0].physicalLocation.artifactLocation.index"))
 
     @property
     def line(self):
@@ -106,7 +105,7 @@ class Rule(SARIFObject):
     @property
     def description(self) -> str:
         """Returns the rule description."""
-        return self.by_path("shortDescription.text", "Unknown")
+        return normalise_string(self.by_path("shortDescription.text", "Unknown"))
 
 
 class Tool(SARIFObject):
@@ -135,12 +134,12 @@ class Artifact(SARIFObject):
     @property
     def parent(self) -> int:
         """Gets the artifact index for the parent of this artifact."""
-        candidate = self.by_path("parentIndex", 0)
+        candidate = self.by_path("parentIndex", None)
 
-        if candidate:
+        if candidate is not None:
             return int(candidate)
         else:
-            return 0
+            raise NoParentException()
 
 
 class Run(SARIFObject):

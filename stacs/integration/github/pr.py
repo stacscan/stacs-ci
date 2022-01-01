@@ -3,12 +3,9 @@
 SPDX-License-Identifier: BSD-3-Clause
 """
 
-
-import hashlib
 import json
 import logging
 import os
-import re
 import sys
 from json.decoder import JSONDecodeError
 from typing import Dict, List
@@ -18,7 +15,6 @@ from stacs.integration.github.client import Client
 from stacs.integration.github.constants import (
     FILE_COMMENT_TEMPLATE,
     NESTED_COMMENT_TEMPLATE,
-    PATTERN_FHASH,
 )
 from stacs.integration.models import SARIF
 
@@ -77,24 +73,6 @@ def position_in_diff(
     raise exceptions.ChangeNotInDiffException()
 
 
-def generate_fhash(filename: str, offset: int, rule: str) -> str:
-    """Generates a finding hash for use in de-duplicating comments."""
-    # TODO: Use virtual path.
-    return hashlib.sha1(bytes(f"{filename}.{offset}.{rule}", "utf-8")).hexdigest()
-
-
-def parse_fhashes_from_comments(comments: List[str]) -> List[str]:
-    """Parses a list of finding hashes (fhashes) from existing comments."""
-    fhashes = []
-
-    for comment in comments:
-        fhash = re.search(PATTERN_FHASH, comment)
-        if fhash:
-            fhashes.append(fhash.group(1))
-
-    return fhashes
-
-
 def main(sarif_file: str, uri_base_id: str = None):
     """STACS Github pull request integration."""
     log = logging.getLogger(__name__)
@@ -151,7 +129,7 @@ def main(sarif_file: str, uri_base_id: str = None):
         sys.exit(3)
 
     # Parse finding hashes (fhahes) from existing review and issue comments.
-    fhashes = parse_fhashes_from_comments(comments)
+    fhashes = helpers.parse_fhashes(comments)
 
     # Roll over the findings and add a comment if they are not suppressed.
     for run in sarif.runs:
@@ -159,9 +137,17 @@ def main(sarif_file: str, uri_base_id: str = None):
         artifacts = run.artifacts
 
         for finding in run.findings:
-            print(f"{finding.filepath} -> {finding.rule}")
             if finding.suppressed:
                 continue
+
+            # Construct a virtual path for handling findings in nested files (archives),
+            # and get the parent identifier.
+            virtual_path = helpers.generate_virtual_path(finding, artifacts)
+
+            try:
+                parent = artifacts[finding.artifact].parent
+            except exceptions.NoParentException:
+                parent = None
 
             # Get a rule object using the finding rule id.
             rule = None
@@ -169,25 +155,19 @@ def main(sarif_file: str, uri_base_id: str = None):
                 if finding.rule == candidate.id:
                     rule = candidate
 
-            # Generate a finding hash, and see if this finding already has a comment.
-            #
-            # TODO: Use full path (virtual) to prevent file confusion.
-            #
-            fhash = generate_fhash(finding.filepath, finding.offset, finding.rule)
+            # Determine if this finding already has a comment using the finding hash.
+            fhash = helpers.generate_fhash(virtual_path, finding.offset, finding.rule)
             if fhash in fhashes:
-                log.info(f"Found comment for finding with fhash {fhash}, skipping")
+                log.info(f"Found existing comment for finding ({fhash}), skipping.")
                 continue
 
-            # Only calculate the position in the diff if the file is both directly in
-            # the repository (not inside an archive), and is text. We can check if the
+            # Only calculate the position in the diff if the file is both text, and is
+            # directly in the repository (not inside an archive). We can check if the
             # finding has a line number to quickly check if the finding is inside a
             # binary.
-            if finding.line and not artifacts[finding.artifact].parent:
+            if finding.line and parent is None:
                 position = position_in_diff(finding.filepath, finding.line, changes)
 
-                print(
-                    f"Finding in {finding.filepath} at {finding.location}, diff location {position}"
-                )
                 github.add_pull_request_review_comment(
                     repository=os.environ["GITHUB_REPOSITORY"],
                     reference=os.environ["GITHUB_REF"],
@@ -197,9 +177,9 @@ def main(sarif_file: str, uri_base_id: str = None):
                         filename=finding.filepath,
                         rule=rule.id,
                         description=rule.description,
-                        suppression=helpers.generate_suppression(finding.filepath),
                         fhash=fhash,
                         version=run.tool.version,
+                        suppression=helpers.generate_suppression(finding.filepath),
                     ),
                     filepath=finding.filepath,
                     position=position,
@@ -209,8 +189,7 @@ def main(sarif_file: str, uri_base_id: str = None):
 
             # Check if the finding is inside of an archive, and if so, generate a file
             # tree for easier location.
-            if artifacts[finding.artifact].parent:
-                print(f"Finding in {finding.filepath} at {finding.location}")
+            if parent:
                 github.add_issue_comment(
                     repository=os.environ["GITHUB_REPOSITORY"],
                     reference=os.environ["GITHUB_REF"],
@@ -218,18 +197,17 @@ def main(sarif_file: str, uri_base_id: str = None):
                         location=finding.location,
                         sample=finding.sample,
                         filename=finding.filepath,
-                        tree=None,
+                        tree=helpers.get_file_tree(virtual_path=virtual_path),
                         rule=rule.id,
                         description=rule.description,
-                        suppression=helpers.generate_suppression(finding.filepath),
                         fhash=fhash,
                         version=run.tool.version,
+                        suppression=helpers.generate_suppression(finding.filepath),
                     ),
                 )
                 continue
 
             # Otherwise, the finding is likely in a binary directly in the repository.
-            print(f"Finding in {finding.filepath} at {finding.location}")
             github.add_issue_comment(
                 repository=os.environ["GITHUB_REPOSITORY"],
                 reference=os.environ["GITHUB_REF"],
@@ -239,8 +217,8 @@ def main(sarif_file: str, uri_base_id: str = None):
                     filename=finding.filepath,
                     rule=rule.id,
                     description=rule.description,
-                    suppression=helpers.generate_suppression(finding.filepath),
                     fhash=fhash,
                     version=run.tool.version,
+                    suppression=helpers.generate_suppression(finding.filepath),
                 ),
             )

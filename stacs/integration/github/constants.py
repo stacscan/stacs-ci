@@ -5,12 +5,9 @@ SPDX-License-Identifier: BSD-3-Clause
 
 DEFAULT_API_URI = "https://api.github.com"
 
-# Used to extract hashes of existing comments for deduplication.
-PATTERN_FHASH = r"\s+\*\*F\*\*:([a-f0-9]{40})]"
-
 # Finding is inside of a regular file.
 FILE_COMMENT_TEMPLATE = (
-    "#### :x: [STACS](https://github.com/stacscan/stacs) Finding\n"
+    "### :x: [STACS](https://github.com/stacscan/stacs) Finding\n"
     "STACS has found a potential static token or credential at {location} of "
     "`{filename}` due to _{description}_.\n\n"
     "<details><summary>Finding Sample</summary>\n\n"
@@ -32,7 +29,7 @@ FILE_COMMENT_TEMPLATE = (
 
 # Finding is nested inside of an archive.
 NESTED_COMMENT_TEMPLATE = (
-    "#### :x: [STACS](https://github.com/stacscan/stacs) Finding\n"
+    "### :x: [STACS](https://github.com/stacscan/stacs) Finding\n"
     "STACS has found a potential static token or credential at {location} of "
     "`{filename}` due to _{description}_. Please be aware that this file is inside of "
     "an archive, the full path to the file is:\n\n"
