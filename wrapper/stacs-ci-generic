@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# Run STACS, and stash the output for analysis by the generic CI integration.
+stacs \
+    --rule-pack /mnt/stacs/rules/credential.json \
+    --cache-directory /mnt/stacs/cache \
+    "/mnt/stacs/input/${SCAN_SUBDIR}" 1> /tmp/stacs.sarif
+
+# Run the generic CI integration.
+if [ "${SCAN_SUBDIR}x" != "x" ]; then
+    python3 -m stacs.integration.generic /tmp/stacs.sarif --prefix "${SCAN_SUBDIR}"
+else
+    python3 -m stacs.integration.generic /tmp/stacs.sarif
+fi
+
+# Fail the build if requested.
+STATUS=$?
+
+if [ "${FAIL_BUILD}x" != "x" ]; then
+    exit $STATUS
+else
+    exit 0
+fi

@@ -1,5 +1,5 @@
-[![Shield](https://img.shields.io/docker/pulls/stacscan/stacs?style=flat-square)](https://hub.docker.com/r/stacscan/stacs)
-[![Shield](https://img.shields.io/docker/image-size/stacscan/stacs?style=flat-square)](https://hub.docker.com/r/stacscan/stacs/tags?page=1&ordering=last_updated)
+[![Shield](https://img.shields.io/docker/pulls/stacscan/stacs-ci?style=flat-square)](https://hub.docker.com/r/stacscan/stacs-ci)
+[![Shield](https://img.shields.io/docker/image-size/stacscan/stacs-ci?style=flat-square)](https://hub.docker.com/r/stacscan/stacs-ci/tags?page=1&ordering=last_updated)
 [![Shield](https://img.shields.io/twitter/follow/stacscan?style=flat-square)](https://twitter.com/stacscan)
 <p align="center">
     <br /><br />
@@ -9,7 +9,7 @@
     <br />
     <b>Static Token And Credential Scanner</b>
     <br />
-    <i>Integrations</i>
+    <i>CI</i>
     <br />
 </p>
 
@@ -19,6 +19,12 @@ This repository contains a set of modules to enable integration of STACS with co
 used CI / CD systems. Currently, this repository supports:
 
 * Github Actions
+  * Fails the build on findings.
+  * Automatically annotates pull-requests with findings
+
+* Generic CI Systems
+  * Fails the build on findings.
+  * Outputs findings to the console in formatted plain-text.
 
 STACS is a [YARA](https://virustotal.github.io/yara/) powered static credential scanner
 which suports source code, binary file formats, analysis of nested archives, composable
@@ -65,8 +71,9 @@ as security events to Github (see "Permissions" section below).
 uses: actions/stacscan@v1
 ```
 
-The following example scans a directory (`binaries/`) which contains binary objects,
-compiled for release by another step of a Github actions pipeline.
+The following example scans a sub-directory in the repository. In this example the 
+`binaries/` sub-directory contains binary objects, compiled for release by another step
+of a Github actions pipeline.
 
 ```yaml
 uses: actions/stacscan@v1
@@ -75,7 +82,7 @@ with:
 ```
 
 The following example disables 'failing the build' if there are findings which have not
-been ignore / suppressed.
+been ignored / suppressed.
 
 ```yaml
 uses: actions/stacscan@v1
