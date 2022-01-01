@@ -21,7 +21,7 @@ jobs:
           git clone https://www.github.com/stacscan/stacs-rules /mnt/stacs/rules
 
       - name: Extract version
-        run: |          
+        run: |
           pushd /mnt/stacs/rules
           RULES_VERSION="$(git rev-parse --short HEAD)"
           popd
