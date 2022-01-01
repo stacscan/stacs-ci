@@ -11,6 +11,7 @@ from json.decoder import JSONDecodeError
 from typing import Dict, List
 
 from stacs.ci import diff, exceptions, helpers
+from stacs.ci.constants import FINDING_EXIT_CODE
 from stacs.ci.github.client import Client
 from stacs.ci.github.constants import FILE_COMMENT_TEMPLATE, NESTED_COMMENT_TEMPLATE
 from stacs.ci.models import SARIF
@@ -79,7 +80,7 @@ def main(sarif_file: str, prefix: str = None):
     if missing_context:
         log.fatal(
             "Required environment variables are missing cannot continue: "
-            f"{','.join(missing_context)}"
+            f"{', '.join(missing_context)}"
         )
         sys.exit(1)
 
@@ -89,7 +90,7 @@ def main(sarif_file: str, prefix: str = None):
             sarif = SARIF(json.load(fin))
     except (OSError, JSONDecodeError) as err:
         log.fatal(err)
-        sys.exit(2)
+        sys.exit(1)
 
     # Setup a Github API client.
     github = Client(api=os.environ["GITHUB_API_URL"], token=os.environ["GITHUB_TOKEN"])
@@ -105,7 +106,7 @@ def main(sarif_file: str, prefix: str = None):
         )
     except exceptions.ExternalServiceException as err:
         log.fatal(err)
-        sys.exit(3)
+        sys.exit(1)
 
     # Request a list of comments and issue comments from Github.
     comments = []
@@ -127,10 +128,13 @@ def main(sarif_file: str, prefix: str = None):
         )
     except exceptions.ExternalServiceException as err:
         log.fatal(err)
-        sys.exit(3)
+        sys.exit(1)
 
     # Parse finding hashes (fhahes) from existing review and issue comments.
     fhashes = helpers.parse_fhashes(comments)
+
+    # Track unsupressed findings so that we can exit appropriately.
+    unsuppressed = 0
 
     # Roll over the findings and add comments where required.
     for run in sarif.runs:
@@ -147,10 +151,12 @@ def main(sarif_file: str, prefix: str = None):
                 filepath = f"{prefix.rstrip('/')}/{filepath}"
                 virtual_path = f"{prefix.rstrip('/')}/{virtual_path}"
 
-            # Skip the finding if it's suppressed.
+            # Skip the finding if it's suppressed, otherwise track it.
             if finding.suppressed:
                 log.info(f"Skipping suppressed {finding.rule} finding in {filepath}")
                 continue
+            else:
+                unsuppressed += 1
 
             try:
                 parent = artifacts[finding.artifact].parent
@@ -177,7 +183,7 @@ def main(sarif_file: str, prefix: str = None):
             # finding has a line number to quickly check if the finding is inside a
             # binary.
             if finding.line and parent is None:
-                position = position_in_diff(finding.filepath, finding.line, changes)
+                position = position_in_diff(filepath, finding.line, changes)
 
                 log.info(
                     f"Attempting to add review comment for {finding.rule} finding in "
@@ -189,14 +195,14 @@ def main(sarif_file: str, prefix: str = None):
                     comment=FILE_COMMENT_TEMPLATE.format(
                         location=finding.location,
                         sample=finding.sample,
-                        filename=finding.filepath,
+                        filename=filepath,
                         rule=rule.id,
                         description=rule.description,
                         fhash=fhash,
                         version=run.tool.version,
-                        suppression=helpers.generate_suppression(finding.filepath),
+                        suppression=helpers.generate_suppression(filepath),
                     ),
-                    filepath=finding.filepath,
+                    filepath=filepath,
                     position=position,
                     commit=os.environ["GITHUB_SHA"],
                 )
@@ -215,13 +221,13 @@ def main(sarif_file: str, prefix: str = None):
                     comment=NESTED_COMMENT_TEMPLATE.format(
                         location=finding.location,
                         sample=finding.sample,
-                        filename=finding.filepath,
+                        filename=filepath,
                         tree=helpers.get_file_tree(virtual_path=virtual_path),
                         rule=rule.id,
                         description=rule.description,
                         fhash=fhash,
                         version=run.tool.version,
-                        suppression=helpers.generate_suppression(finding.filepath),
+                        suppression=helpers.generate_suppression(filepath),
                     ),
                 )
                 continue
@@ -237,11 +243,16 @@ def main(sarif_file: str, prefix: str = None):
                 comment=FILE_COMMENT_TEMPLATE.format(
                     location=finding.location,
                     sample=finding.sample,
-                    filename=finding.filepath,
+                    filename=filepath,
                     rule=rule.id,
                     description=rule.description,
                     fhash=fhash,
                     version=run.tool.version,
-                    suppression=helpers.generate_suppression(finding.filepath),
+                    suppression=helpers.generate_suppression(filepath),
                 ),
             )
+
+    if unsuppressed > 0:
+        sys.exit(FINDING_EXIT_CODE)
+    else:
+        sys.exit(0)

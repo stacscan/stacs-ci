@@ -117,4 +117,4 @@ def main(sarif_file: str, prefix: str = None):
 
         print(f"\n{Fore.RESET}{'-' * 78}\n")
 
-    sys.exit(1)
+    sys.exit(constants.FINDING_EXIT_CODE)

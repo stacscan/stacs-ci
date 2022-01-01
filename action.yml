@@ -1,0 +1,23 @@
+name: 'STACS Scan'
+description: 'Scan source code and binaries for static credentials.'
+branding:
+  icon: 'check-circle'
+  color: 'blue'
+
+inputs:
+  scan-directory:
+    description: 'An optional sub-directory to execute the scan in.'
+    default: ''
+  fail-build:
+    description: 'Whether to fail the build on unsupressed finding.'
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: 'docker://stacscan/stacs-ci:0.1.0-r1b4c85b'
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        FAIL_BUILD: ${{ inputs.fail-build }}
+        SCAN_SUBDIR: ${{ inputs.scan-directory }}
+        SCAN_DIR: "/github/workspace"

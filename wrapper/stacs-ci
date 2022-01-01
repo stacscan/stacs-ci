@@ -1,0 +1,84 @@
+#!/bin/sh
+#
+# This wrapper is used to determine which STACS CI integration needs to be run, this
+# allows a common entrypoint between CI systems.
+#
+
+# Default to the generic integration.
+STACS_CI_MODULE="stacs.ci.generic"
+
+# Check whether we're running in a Github action.
+if [ -n "${GITHUB_ACTION}" ]; then
+    if [ ! -e "${GITHUB_EVENT_PATH}" ]; then
+        echo "**********************************************************************"
+        echo "  TRIGGER APPEARS TO BE GITHUB ACTION, NOT THERE IS NO EVENT PAYLOAD"
+        echo "  ON DISK. CANNOT CONTINUE."
+        echo "**********************************************************************"
+        exit 1
+    fi
+
+    # If the trigger isn't a pull request, then we'll just use the generic integration
+    # as findings will be output to the terminal, rather than to a non-existent pull
+    # request.
+    if [ "${GITHUB_EVENT_NAME}" != "pull_request"]; then
+        STACS_CI_MODULE="stacs.ci.generic"
+    else
+        STACS_CI_MODULE="stacs.ci.github"
+
+        # When running in response to a pull request we need to get the commit SHA of
+        # the commit itself, rather than the merge commit SHA.
+        GITHUB_SHA="$(jq -r .pull_request.head.sha "${GITHUB_EVENT_PATH}")"
+    fi
+
+fi
+
+# Run STACS, and stash the output for analysis by the generic CI integration.
+if [ -z "${SCAN_DIR}" ]; then
+    stacs \
+        --rule-pack /mnt/stacs/rules/credential.json \
+        --cache-directory /mnt/stacs/cache \
+        "/mnt/stacs/input/${SCAN_SUBDIR}" 1> /tmp/stacs.sarif
+else
+    stacs \
+        --rule-pack /mnt/stacs/rules/credential.json \
+        --cache-directory /mnt/stacs/cache \
+        "${SCAN_DIR}/${SCAN_SUBDIR}" 1> /tmp/stacs.sarif
+fi
+
+# We want to fail the build anyway if the exit code is something other than zero for
+# the scanner, as this would indicate a problem.
+SCAN_STATUS=$?
+
+if [ ${SCAN_STATUS} -ne 0 ]; then
+    exit $SCAN_STATUS
+fi
+
+# Run the generic CI integration.
+if [ -z "${SCAN_SUBDIR}" ]; then
+    python3 -m "${STACS_CI_MODULE}" /tmp/stacs.sarif
+else
+    python3 -m "${STACS_CI_MODULE}" /tmp/stacs.sarif --prefix "${SCAN_SUBDIR}"
+fi
+
+# We want to fail the build on a status that isn't zero OR 100 (unsupressed finding).
+# This is to ensure that errors with the tool itself aren't accidentally ignored.
+CI_STATUS=$?
+
+if [ $CI_STATUS -ne 0 ] && [ $CI_STATUS -ne 100 ]; then
+    echo
+    echo "**********************************************************************"
+    echo "AN UNEXPECTED ERROR OCCURED WITH STACS CI. PLEASE REVIEW THE LOGS "
+    echo "ABOVE."
+    echo "**********************************************************************"
+    echo
+    exit $CI_STATUS
+fi
+
+# Fail the build on unsuppressed finding, if requested.
+FAIL_BUILD="$(echo "${FAIL_BUILD}" | tr '[:upper:]' '[:lower:]')"
+
+if [ "${FAIL_BUILD}" != "true" ]; then
+    exit 0
+else
+    exit $CI_STATUS
+fi

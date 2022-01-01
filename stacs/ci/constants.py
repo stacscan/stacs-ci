@@ -10,3 +10,6 @@ PATH_SEPARATOR = "!"
 
 # Used to extract hashes of existing comments / bodies of text for deduplication.
 PATTERN_FHASH = r"\s+\*\*F\*\*:([a-f0-9]{40})]"
+
+# The exit code to use when there is an unsupressed finding.
+FINDING_EXIT_CODE = 100
