@@ -1,0 +1,9 @@
+{
+    "include": [],
+    "ignore": [
+        {
+            "pattern": "test/fixtures/shadow",
+            "reason": "Test shadow file contain example credentials."
+        }
+    ]
+}

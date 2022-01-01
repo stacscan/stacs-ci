@@ -4,7 +4,6 @@ SPDX-License-Identifier: BSD-3-Clause
 """
 
 
-import argparse
 import hashlib
 import json
 import logging
@@ -12,7 +11,7 @@ import os
 import re
 import sys
 from json.decoder import JSONDecodeError
-from typing import Any, Dict, List
+from typing import Dict, List
 
 from stacs.integration import diff, exceptions, helpers
 from stacs.integration.github.client import Client
@@ -58,17 +57,17 @@ def position_in_diff(
     for start, change in changes[filepath].items():
         # Determine the last line number of this hunk by counting all additions and
         # existing lines, but ignoring removals.
-        position = int(start)
+        current = int(start)
         contents = change["content"].splitlines()
         offset = change["offset"]
 
         for index, candidate in enumerate(contents):
             if candidate.startswith(("+", " ")) and index < len(contents) - 1:
-                position += 1
+                current += 1
 
             # Track the line number relative to the first diff hunk of this file - which
             # is the required offset to add a comment via the Github API.
-            if line == position:
+            if line == current:
                 position = offset + (index + 1)
 
         # If we already have a matching location, return it.
@@ -96,25 +95,8 @@ def parse_fhashes_from_comments(comments: List[str]) -> List[str]:
     return fhashes
 
 
-def main():
+def main(sarif_file: str, uri_base_id: str = None):
     """STACS Github pull request integration."""
-    parser = argparse.ArgumentParser(
-        description="Annotates Github pull requests with STACS unsuppressed findings."
-    )
-    parser.add_argument(
-        "sarif",
-        help="Path to the SARIF file to process",
-    )
-    parser.add_argument(
-        "--uri-base-id",
-        help="The absolute path of the directory the scan was executed from",
-    )
-    arguments = parser.parse_args()
-
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(process)d - [%(levelname)s] %(message)s",
-    )
     log = logging.getLogger(__name__)
 
     # Ensure the environment is as we expect (running in Github actions).
@@ -126,24 +108,16 @@ def main():
         )
         sys.exit(1)
 
-    # Perform a cheap check whether the trigger was a pull request.
-    if "/pull/" not in os.environ["GITHUB_REF"]:
-        log.info("Trigger does not appear to be a pull request, exiting.")
-        sys.exit(0)
-
     # Read in the input SARIF file.
     try:
-        with open(os.path.abspath(os.path.expanduser(arguments.sarif)), "r") as fin:
+        with open(os.path.abspath(os.path.expanduser(sarif_file)), "r") as fin:
             sarif = SARIF(json.load(fin))
     except (OSError, JSONDecodeError) as err:
         log.fatal(err)
         sys.exit(2)
 
     # Setup a Github API client.
-    github = Client(
-        api=os.environ["GITHUB_API_URL"],
-        token=os.environ["GITHUB_TOKEN"],
-    )
+    github = Client(api=os.environ["GITHUB_API_URL"], token=os.environ["GITHUB_TOKEN"])
 
     # Fetch and parse the pull-request diff from Github.
     try:
@@ -185,16 +159,20 @@ def main():
         artifacts = run.artifacts
 
         for finding in run.findings:
+            print(f"{finding.filepath} -> {finding.rule}")
             if finding.suppressed:
                 continue
 
-            # Get the rule object from the tool rules.
+            # Get a rule object using the finding rule id.
             rule = None
             for candidate in rules:
                 if finding.rule == candidate.id:
                     rule = candidate
 
             # Generate a finding hash, and see if this finding already has a comment.
+            #
+            # TODO: Use full path (virtual) to prevent file confusion.
+            #
             fhash = generate_fhash(finding.filepath, finding.offset, finding.rule)
             if fhash in fhashes:
                 log.info(f"Found comment for finding with fhash {fhash}, skipping")
@@ -207,6 +185,9 @@ def main():
             if finding.line and not artifacts[finding.artifact].parent:
                 position = position_in_diff(finding.filepath, finding.line, changes)
 
+                print(
+                    f"Finding in {finding.filepath} at {finding.location}, diff location {position}"
+                )
                 github.add_pull_request_review_comment(
                     repository=os.environ["GITHUB_REPOSITORY"],
                     reference=os.environ["GITHUB_REF"],
@@ -229,6 +210,7 @@ def main():
             # Check if the finding is inside of an archive, and if so, generate a file
             # tree for easier location.
             if artifacts[finding.artifact].parent:
+                print(f"Finding in {finding.filepath} at {finding.location}")
                 github.add_issue_comment(
                     repository=os.environ["GITHUB_REPOSITORY"],
                     reference=os.environ["GITHUB_REF"],
@@ -247,6 +229,7 @@ def main():
                 continue
 
             # Otherwise, the finding is likely in a binary directly in the repository.
+            print(f"Finding in {finding.filepath} at {finding.location}")
             github.add_issue_comment(
                 repository=os.environ["GITHUB_REPOSITORY"],
                 reference=os.environ["GITHUB_REF"],
@@ -261,7 +244,3 @@ def main():
                     version=run.tool.version,
                 ),
             )
-
-
-if __name__ == "__main__":
-    main()

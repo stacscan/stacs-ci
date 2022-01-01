@@ -5,7 +5,8 @@ import os
 import unittest
 
 from stacs.integration import exceptions
-from stacs.integration.github import pull_request  # noqa: F401
+from stacs.integration.github import pr
+from stacs.integration.models import SARIF, Finding
 
 
 class STACSIntegrationGithubPullRequest(unittest.TestCase):
@@ -22,7 +23,7 @@ class STACSIntegrationGithubPullRequest(unittest.TestCase):
         """Ensure everything is torn down between tests."""
         pass
 
-    def test_get_position_in_diff(self):
+    def test_position_in_diff(self):
         """Ensure that calculated offsets for test fixtures match expected values."""
         # Large dictionaries represnting findings and changes already parsed using their
         # respective functions are stashed as fixtures to prevent tests being difficult
@@ -30,38 +31,29 @@ class STACSIntegrationGithubPullRequest(unittest.TestCase):
         changes = json.load(
             open(os.path.join(self.fixtures_path, "dicts/001.changes.json"), "r")
         )
-        findings = json.load(
-            open(os.path.join(self.fixtures_path, "dicts/001.findings.json"), "r")
+
+        # Load SARIF to get findings.
+        sarif = SARIF(
+            json.load(open(os.path.join(self.fixtures_path, "sarif/001.json"), "r"))
         )
-        artifacts = json.load(
-            open(os.path.join(self.fixtures_path, "dicts/001.artifacts.json"), "r")
+        runs = sarif.runs
+        findings = runs[0].findings
+
+        # First finding in example_more should be at position 3 in the diff.
+        self.assertEqual(
+            pr.position_in_diff(findings[0].filepath, findings[0].line, changes), 3
         )
 
         # Binary file offset won't exist in the diff, so an exception should be raised.
         with self.assertRaises(exceptions.ChangeNotInDiffException):
-            pull_request.get_position_in_diff(
-                finding=findings[0], changes=changes, artifacts=artifacts
-            )
+            pr.position_in_diff(findings[1].filepath, findings[1].line, changes)
 
-        # First finding in example_more should be at position 3.
+        # First finding in example_two should be at position 7 in the diff.
         self.assertEqual(
-            pull_request.get_position_in_diff(
-                finding=findings[1], changes=changes, artifacts=artifacts
-            ),
-            3,
+            pr.position_in_diff(findings[4].filepath, findings[4].line, changes), 7
         )
 
-        # Second finding in example_two should be at position 42.
+        # Second finding in example_two should be at position 42 in the diff.
         self.assertEqual(
-            pull_request.get_position_in_diff(
-                finding=findings[2], changes=changes, artifacts=artifacts
-            ),
-            42,
+            pr.position_in_diff(findings[5].filepath, findings[5].line, changes), 42
         )
-
-        # The last finding has a filename which matches the second, but the file itself
-        # is inside of an archive, so this should raise an exception.
-        with self.assertRaises(exceptions.ChangeNotInDiffException):
-            pull_request.get_position_in_diff(
-                finding=findings[3], changes=changes, artifacts=artifacts
-            )
