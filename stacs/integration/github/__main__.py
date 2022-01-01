@@ -16,8 +16,11 @@ if __name__ == "__main__":
         help="Path to the SARIF file to process",
     )
     parser.add_argument(
-        "--uri-base-id",
-        help="The absolute path of the directory the scan was executed from",
+        "--prefix",
+        help=(
+            "The path to a sub-directory under the repository root the scan was"
+            "executed from"
+        ),
     )
     arguments = parser.parse_args()
 
@@ -28,4 +31,4 @@ if __name__ == "__main__":
     log = logging.getLogger(__name__)
 
     # So far we only support pull-requests, but that may change in future.
-    pr.main(sarif_file=arguments.sarif, uri_base_id=arguments.uri_base_id)
+    pr.main(sarif_file=arguments.sarif, prefix=arguments.prefix)

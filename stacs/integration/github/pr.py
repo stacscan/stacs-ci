@@ -73,7 +73,7 @@ def position_in_diff(
     raise exceptions.ChangeNotInDiffException()
 
 
-def main(sarif_file: str, uri_base_id: str = None):
+def main(sarif_file: str, prefix: str = None):
     """STACS Github pull request integration."""
     log = logging.getLogger(__name__)
 

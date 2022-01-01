@@ -8,6 +8,8 @@ certifi==2021.10.8
     # via requests
 charset-normalizer==2.0.9
     # via requests
+colorama==0.4.4
+    # via -r requirements.in
 idna==3.3
     # via requests
 jmespath==0.10.0

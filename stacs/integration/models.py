@@ -7,7 +7,7 @@ from typing import Any, Dict, List
 
 import jmespath
 from stacs.integration.exceptions import NoParentException
-from stacs.integration.helpers import normalise_string, string_difference
+from stacs.integration.helpers import normalise_string
 
 
 class SARIFObject:

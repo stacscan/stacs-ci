@@ -8,6 +8,7 @@ import json
 import re
 from typing import List
 
+import colorama
 from stacs.integration.constants import PATH_SEPARATOR, PATTERN_FHASH
 from stacs.integration.exceptions import NoParentException
 
@@ -58,22 +59,6 @@ def normalise_string(text: str) -> str:
     return candidate.rstrip(".")
 
 
-def string_difference(first: str, second: str):
-    """Returns the portion of the first string which is not present in the second."""
-    difference = str()
-
-    for index, char in enumerate(list(first)):
-        try:
-            if char == second[index]:
-                continue
-            else:
-                difference += char
-        except IndexError:
-            difference += char
-
-    return difference
-
-
 def get_file_tree(virtual_path: str) -> str:
     """Returns a tree layout to the virtual path."""
     tree = str()
@@ -92,7 +77,7 @@ def get_file_tree(virtual_path: str) -> str:
     return tree.rstrip()
 
 
-def generate_suppression(filepath: str):
+def generate_suppression(filepath: str) -> str:
     """Generate an example suppression document for the given file."""
     return json.dumps(
         {
@@ -107,3 +92,28 @@ def generate_suppression(filepath: str):
         indent=4,
         sort_keys=True,
     )
+
+
+def printi(string, indent: int = 4, prefix: str = None):
+    """Super janky wrapper to print something indented."""
+    for line in string.splitlines():
+        if prefix:
+            print(f"{prefix}", end="")
+
+        print(f"{' ' * indent}" + line)
+
+
+def banner(version: str, tool_version: str) -> str:
+    """Returns a STACS console banner."""
+    banner = colorama.Fore.BLUE
+    banner += rf"""
+    ______________   ___________
+   / ___/_  __/   | / ____/ ___/
+   \__ \ / / / /| |/ /    \__ \
+  ___/ // / / ___ / /___ ___/ /
+ /____//_/ /_/  |_\____//____/
+
+       STACS version {tool_version}
+ STACS Integration Version {version}
+    """
+    return banner
