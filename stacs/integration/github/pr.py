@@ -98,6 +98,7 @@ def main(sarif_file: str, prefix: str = None):
     github = Client(api=os.environ["GITHUB_API_URL"], token=os.environ["GITHUB_TOKEN"])
 
     # Fetch and parse the pull-request diff from Github.
+    log.info("Attempting to fetch and parse pull-request diff")
     try:
         changes = diff.parse(
             github.get_pull_request_diff(
@@ -112,12 +113,15 @@ def main(sarif_file: str, prefix: str = None):
     # Request a list of comments and issue comments from Github.
     comments = []
     try:
+        log.info("Attempting to get existing pull-request comments")
         comments.extend(
             github.get_issue_comments(
                 repository=os.environ["GITHUB_REPOSITORY"],
                 reference=os.environ["GITHUB_REF"],
             )
         )
+
+        log.info("Attempting to get existing pull-request review comments")
         comments.extend(
             github.get_pull_request_review_comments(
                 repository=os.environ["GITHUB_REPOSITORY"],
@@ -131,18 +135,25 @@ def main(sarif_file: str, prefix: str = None):
     # Parse finding hashes (fhahes) from existing review and issue comments.
     fhashes = helpers.parse_fhashes(comments)
 
-    # Roll over the findings and add a comment if they are not suppressed.
+    # Roll over the findings and add comments where required.
     for run in sarif.runs:
         rules = run.tool.rules
         artifacts = run.artifacts
 
         for finding in run.findings:
-            if finding.suppressed:
-                continue
-
             # Construct a virtual path for handling findings in nested files (archives),
             # and get the parent identifier.
+            filepath = finding.filepath
             virtual_path = helpers.generate_virtual_path(finding, artifacts)
+
+            if prefix:
+                filepath = f"{prefix.rstrip('/')}/{filepath}"
+                virtual_path = f"{prefix.rstrip('/')}/{virtual_path}"
+
+            # Skip the finding if it's suppressed.
+            if finding.suppressed:
+                log.info(f"Skipping suppressed {finding.rule} finding in {filepath}")
+                continue
 
             try:
                 parent = artifacts[finding.artifact].parent
@@ -158,7 +169,10 @@ def main(sarif_file: str, prefix: str = None):
             # Determine if this finding already has a comment using the finding hash.
             fhash = helpers.generate_fhash(virtual_path, finding.offset, finding.rule)
             if fhash in fhashes:
-                log.info(f"Found existing comment for finding ({fhash}), skipping.")
+                log.info(
+                    f"Found existing comment for {finding.rule} finding in {filepath}, "
+                    f"skipping (FHASH:{fhash})"
+                )
                 continue
 
             # Only calculate the position in the diff if the file is both text, and is
@@ -168,6 +182,10 @@ def main(sarif_file: str, prefix: str = None):
             if finding.line and parent is None:
                 position = position_in_diff(finding.filepath, finding.line, changes)
 
+                log.info(
+                    f"Attempting to add review comment for {finding.rule} finding in "
+                    f"regular file at {filepath}"
+                )
                 github.add_pull_request_review_comment(
                     repository=os.environ["GITHUB_REPOSITORY"],
                     reference=os.environ["GITHUB_REF"],
@@ -190,6 +208,10 @@ def main(sarif_file: str, prefix: str = None):
             # Check if the finding is inside of an archive, and if so, generate a file
             # tree for easier location.
             if parent:
+                log.info(
+                    f"Attempting to add pull-request comment for {finding.rule} "
+                    f"finding in nested file at {filepath}"
+                )
                 github.add_issue_comment(
                     repository=os.environ["GITHUB_REPOSITORY"],
                     reference=os.environ["GITHUB_REF"],
@@ -208,6 +230,10 @@ def main(sarif_file: str, prefix: str = None):
                 continue
 
             # Otherwise, the finding is likely in a binary directly in the repository.
+            log.info(
+                f"Attempting to add pull-request comment for {finding.rule} "
+                f"finding in binary file at {filepath}"
+            )
             github.add_issue_comment(
                 repository=os.environ["GITHUB_REPOSITORY"],
                 reference=os.environ["GITHUB_REF"],
