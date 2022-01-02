@@ -26,12 +26,14 @@ This repository contains a set of modules to enable integration of STACS with co
 used CI / CD systems. Currently, supported is:
 
 * Github Actions
-  * Fails the build on findings.
-  * Automatically annotates pull requests with findings
+  * Fails the build on unsuppressed findings.
+  * Automatically annotates pull requests with findings.
+  * Automatically loads suppressions from a `stacs.ignore.json` in the root of the repository.
 
 * Generic CI Systems
-  * Fails the build on findings.
+  * Fails the build on unsuppressed findings.
   * Outputs findings to the console in formatted plain-text.
+  * Automatically loads suppressions from a `stacs.ignore.json` in the scan directory.
 
 ### Github Actions
 
@@ -59,8 +61,12 @@ added to the line containing the static credential:
 
 ![Github Comment of finding](./docs/images/github_comment.png?raw=true | width=150)
 
-If the credential is found inside of an archive, or in a file not changed by the pull
-request, then a regular comment will be added to the triggering pull request.
+The STACS Github integration will even check the pull request to see whether there is
+an existing comment for this finding, preventing multiple comments being added to the
+same pull request on subsequent commits.
+
+If the credential is found inside of an archive, in a part of a file not modified by the
+pull request, then a regular comment will be added to the triggering pull request.
 
 #### Inputs
 

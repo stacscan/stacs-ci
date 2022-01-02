@@ -32,19 +32,25 @@ if [ -n "${GITHUB_ACTION}" ]; then
 
 fi
 
-# Run STACS, and stash the output for analysis by the generic CI integration.
+# Set the SCAN_DIR to a default if not otherwise specified.
 if [ -z "${SCAN_DIR}" ]; then
+    SCAN_DIR="/mnt/stacs/input"
+fi
+
+# Use an ignore list, if present.
+if [ -e "${SCAN_DIR}/stacs.ignore.json" ]; then
     stacs \
         --rule-pack /mnt/stacs/rules/credential.json \
         --cache-directory /mnt/stacs/cache \
-        "/mnt/stacs/input/${SCAN_SUBDIR}" 1> /tmp/stacs.sarif
+        --ignore-list "${SCAN_DIR}/stacs.ignore.json" \
+        "${SCAN_DIR}/${SCAN_SUBDIR}" 1> /tmp/stacs.sarif
 else
     stacs \
         --rule-pack /mnt/stacs/rules/credential.json \
         --cache-directory /mnt/stacs/cache \
         "${SCAN_DIR}/${SCAN_SUBDIR}" 1> /tmp/stacs.sarif
 fi
-
+    
 # We want to fail the build anyway if the exit code is something other than zero for
 # the scanner, as this would indicate a problem.
 SCAN_STATUS=$?
