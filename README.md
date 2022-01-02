@@ -1,9 +1,12 @@
+[![Shield](https://img.shields.io/github/workflow/status/stacscan/stacs-ci/Check?label=Tests&style=flat-square)](https://github.com/stacscan/stacs-ci/actions?workflow=Check)
+[![Shield](https://img.shields.io/github/workflow/status/stacscan/stacs-ci/Publish?label=Deploy&style=flat-square)](https://github.com/stacscan/stacs-ci/actions?workflow=Publish)
 [![Shield](https://img.shields.io/docker/pulls/stacscan/stacs-ci?style=flat-square)](https://hub.docker.com/r/stacscan/stacs-ci)
 [![Shield](https://img.shields.io/docker/image-size/stacscan/stacs-ci?style=flat-square)](https://hub.docker.com/r/stacscan/stacs-ci/tags?page=1&ordering=last_updated)
+![Shield](https://img.shields.io/github/license/stacscan/stacs-ci?style=flat-square)
 [![Shield](https://img.shields.io/twitter/follow/stacscan?style=flat-square)](https://twitter.com/stacscan)
 <p align="center">
     <br /><br />
-    <img src="./docs/images/STACS-Logo-RGB.small.png?raw=true">
+    <img src="https://raw.githubusercontent.com/stacscan/stacs-ci/main/docs/images/STACS-Logo-RGB.small.png?raw=true">
 </p>
 <p align="center">
     <br />
@@ -15,42 +18,62 @@
 
 ## What is it?
 
-This repository contains a set of modules to enable integration of STACS with commonly
-used CI / CD systems. Currently, this repository supports:
-
-* Github Actions
-  * Fails the build on findings.
-  * Automatically annotates pull-requests with findings
-
-* Generic CI Systems
-  * Fails the build on findings.
-  * Outputs findings to the console in formatted plain-text.
-
 STACS is a [YARA](https://virustotal.github.io/yara/) powered static credential scanner
 which suports source code, binary file formats, analysis of nested archives, composable
 rulesets and ignore lists, and SARIF reporting.
 
+This repository contains a set of modules to enable integration of STACS with commonly
+used CI / CD systems. Currently, supported is:
+
+* Github Actions
+  * Fails the build on unsuppressed findings.
+  * Automatically annotates pull requests with findings.
+  * Automatically loads suppressions from a `stacs.ignore.json` in the root of the repository.
+
+* Generic CI Systems
+  * Fails the build on unsuppressed findings.
+  * Outputs findings to the console in formatted plain-text.
+  * Automatically loads suppressions from a `stacs.ignore.json` in the scan directory.
+
 ### Github Actions
 
-This repository contains a Github action which enables running STACS as a Github
-action. This can be used to identify credentials committed to both committed to Git, or
-even credentials accidentally compiled into binary artifacts - such as Android APKs,
-Docker images, RPM packages, ZIP files, [and more](https://github.com/stacscan/stacs/blob/main/README.md#what-does-stacs-support)!
+This Github action enables running STACS as a Github action. This can be used to
+identify credentials committed in both source code, or even credentials accidentally
+compiled into binary artifacts - such as Android APKs, Docker images, RPM packages, ZIP
+files, [and more](https://github.com/stacscan/stacs/blob/main/README.md#what-does-stacs-support)!
 
-This action automatically annotates a pull-request with findings to allow simplified
-review integrated with existing code-review processes. As this integration does not use
-the Github security events framework, no additional subscription to Github is required,
-even for private repositories!
+If run as part of a pull request, this action automatically annotates a pull request
+with findings to allow simplified review integrated with existing code-review processes.
+As this integration does not use the Github security events framework, no additional
+subscription to Github is required, even for private repositories!
+
+This action can also be used as part of a `release` event. Allowing scanning of binaries
+before publishing to catch credentials which may have been accidentally generated or
+included as part of the build process.
 
 Additionally, this action can 'fail the build' if any static tokens and credentials are
 detected.
+
+#### Appearance
+
+If STACS detects a static credential during a pull request, a review comment will be
+added to the line containing the static credential:
+
+<img src="./docs/images/github_comment.png?raw=true" width="500px" alt="Github Comment of finding" />
+
+The STACS Github integration will even check the pull request to see whether there is
+an existing comment for this finding, preventing multiple comments being added to the
+same pull request on subsequent commits.
+
+If the credential is found inside of an archive, in a part of a file not modified by the
+pull request, then a regular comment will be added to the triggering pull request.
 
 #### Inputs
 
 ##### `scan-directory`
 
-An optional subdirectory to scan. This allows scanning to be limited to a specific
-directory under the repository root.
+An optional subdirectory to scan, relative to the repository root. This allows scanning
+to be limited to a specific directory under the repository root.
 
 Defaults to the repository root.
 
@@ -59,17 +82,6 @@ Defaults to the repository root.
 Defines whether this action should 'fail the build' if any static token or credentials
 are detected. This will take any suppressed / ignore listed entries into account,
 allowing consumers to ignore known false positives - such as test fixtures.
-
-Defaults to `true`
-
-##### `pull-request`
-
-Defines whether the Action is executing in a pull-request. This is used to instruct
-STACS to output findings to the console, rather than adding comments to a pull-request.
-
-This is especially useful for Github Actions running in response to a new release being
-created. Allowing binaries, such as Docker containers and system packages, to be scanned
-before publishing, failing the build if credentials are detected.
 
 Defaults to `true`
 
@@ -101,19 +113,9 @@ with:
     fail-build: false
 ```
 
-The following example would scan a sub-directory in the repository, and print any
-findings to the console, rather than adding pull-request comments:
-
-```yaml
-uses: actions/stacscan@v1
-with:
-    scan-directory: 'binaries/'
-    pull-request: false
-```
-
 #### Permissions
 
-Please be aware that in order to annotate pull-requests with comments, the action must
+Please be aware that in order to annotate pull requests with comments, the action must
 also be granted `write` permissions to `pull-requests`. This can be done by adding the
 following to the respective `job` in your Github actions pipeline.
 
@@ -122,6 +124,8 @@ permissions:
     contents: read         # Required to read the repository contents (checkout).
     pull-requests: write   # Required to annotate pull requests with comments.
 ```
+
+This is only required if running in response to `pull-request` triggers.
 
 ### Generic CI
 
@@ -132,6 +136,16 @@ The pre-built Docker image greatly simplifies this process and provides a mechan
 quickly execute a STACS scan against a given directory, print the results in an
 actionable manner, and signal to the CI system that the build should fail on findings.
 
+#### Appearance
+
+If STACS detects a static credential, a results block will be printed to the console
+with information required to identify its location:
+
+<img src="./docs/images/generic_tui.png?raw=true" width="500px" alt="Terminal output of findings" />
+
+If the credential is found within an archive, STACS will print a file tree to allow
+quick identification of exactly where the credential is.
+
 #### Basic
 
 The simpliest form of executing the Generic CI integration can be performed using the
@@ -140,14 +154,14 @@ configuration Docker will complete with a non-zero exit code if any unsupressed 
 are found:
 
 ```bash
-docker run -it --mount type=bind,source=$(pwd),target=/mnt/stacs/input stacscan/stacs-ci:latest
+docker run -it -v $(pwd):/mnt/stacs/input stacscan/stacs-ci:latest
 ```
 
 To prevent a non-zero exit code on unsupressed findings, such as for initial 'dry run'
 style operation, the following command can be run:
 
 ```bash
-docker run -it -e FAIL_BUILD=false --mount type=bind,source=$(pwd),target=/mnt/stacs/input stacscan/stacs-ci:latest
+docker run -it -e FAIL_BUILD=false -v $(pwd):/mnt/stacs/input stacscan/stacs-ci:latest
 ```
 
 #### Jenkins
