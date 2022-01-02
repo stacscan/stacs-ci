@@ -1,5 +1,5 @@
-name: 'STACS Scan'
-description: 'Scan source code and binaries for static credentials.'
+name: 'STACS CI'
+description: 'Scan source code, binaries, packages, and archives for static credentials.'
 branding:
   icon: 'check-circle'
   color: 'blue'
