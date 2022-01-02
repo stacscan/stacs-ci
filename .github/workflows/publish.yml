@@ -15,19 +15,12 @@ jobs:
         with:
           python-version: 3.9
 
-      - name: Update Rules
-        run: |
-          rm -rf /mnt/stacs/rules
-          git clone https://www.github.com/stacscan/stacs-rules /mnt/stacs/rules
-
       - name: Extract version
         run: |
-          pushd /mnt/stacs/rules
-          RULES_VERSION="$(git rev-parse --short HEAD)"
-          popd
+          RULES_VERSION="$(head -n1 Dockerfile | cut -d '-' -f 2)"
           pip install .
           STACS_CI_VERSION="$(python -c 'from stacs.ci.__about__ import __version__ ; print(__version__, end="")')"
-          echo "IMAGE_VERSION=${STACS_CI_VERSION}-r${RULES_VERSION}" >> "${GITHUB_ENV}"
+          echo "IMAGE_VERSION=${STACS_CI_VERSION}-${RULES_VERSION}" >> "${GITHUB_ENV}"
 
       - name: Login to DockerHub
         uses: docker/login-action@v1 
