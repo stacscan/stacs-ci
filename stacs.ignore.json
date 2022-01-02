@@ -1,0 +1,17 @@
+{
+    "include": [],
+    "ignore": [
+        {
+            "pattern": "tests/fixtures/dicts/.*$",
+            "reason": "Dict fixtures contain example credentials."
+        },
+        {
+            "pattern": "tests/fixtures/diff/.*$",
+            "reason": "Diff fixtures contain example credentials."
+        },
+        {
+            "pattern": "tests/fixtures/sarif/.*$",
+            "reason": "SARIF fixtures contain example credentials."
+        }
+    ]
+}

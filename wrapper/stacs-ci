@@ -20,7 +20,7 @@ if [ -n "${GITHUB_ACTION}" ]; then
     # If the trigger isn't a pull request, then we'll just use the generic integration
     # as findings will be output to the terminal, rather than to a non-existent pull
     # request.
-    if [ "${GITHUB_EVENT_NAME}" != "pull_request"]; then
+    if [ "${GITHUB_EVENT_NAME}" != "pull_request" ]; then
         STACS_CI_MODULE="stacs.ci.generic"
     else
         STACS_CI_MODULE="stacs.ci.github"
@@ -59,11 +59,12 @@ if [ ${SCAN_STATUS} -ne 0 ]; then
     exit $SCAN_STATUS
 fi
 
-# Run the generic CI integration.
+# Run the relevant integration.
 if [ -z "${SCAN_SUBDIR}" ]; then
-    python3 -m "${STACS_CI_MODULE}" /tmp/stacs.sarif
+    GITHUB_SHA="${GITHUB_SHA}" python3 -m "${STACS_CI_MODULE}" /tmp/stacs.sarif
 else
-    python3 -m "${STACS_CI_MODULE}" /tmp/stacs.sarif --prefix "${SCAN_SUBDIR}"
+    GITHUB_SHA="${GITHUB_SHA}" python3 -m "${STACS_CI_MODULE}" /tmp/stacs.sarif \
+        --prefix "${SCAN_SUBDIR}"
 fi
 
 # We want to fail the build on a status that isn't zero OR 100 (unsupressed finding).

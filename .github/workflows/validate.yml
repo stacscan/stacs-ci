@@ -8,7 +8,7 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    name: Validates the Github action
+    name: Validate Github action
     permissions:
         contents: read         # Required to read the repository contents (checkout).
         pull-requests: write   # Required to annotate pull requests with comments.
@@ -16,9 +16,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Execute Github CI Integration
+      - name: Repository Root
+        uses: ./
+        with:
+          fail-build: false
+
+      - name: Sub Directory
         uses: ./
         with:
           scan-directory: tests/fixtures/ci/
           fail-build: false
-
