@@ -154,14 +154,14 @@ configuration Docker will complete with a non-zero exit code if any unsupressed 
 are found:
 
 ```bash
-docker run -it --mount type=bind,source=$(pwd),target=/mnt/stacs/input stacscan/stacs-ci:latest
+docker run -it -v $(pwd):/mnt/stacs/input stacscan/stacs-ci:latest
 ```
 
 To prevent a non-zero exit code on unsupressed findings, such as for initial 'dry run'
 style operation, the following command can be run:
 
 ```bash
-docker run -it -e FAIL_BUILD=false --mount type=bind,source=$(pwd),target=/mnt/stacs/input stacscan/stacs-ci:latest
+docker run -it -e FAIL_BUILD=false -v $(pwd):/mnt/stacs/input stacscan/stacs-ci:latest
 ```
 
 #### Jenkins
