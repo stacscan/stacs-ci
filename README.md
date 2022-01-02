@@ -91,7 +91,7 @@ The following example scans the currently checked out commit and uploads the fin
 as security events to Github (see "Permissions" section below).
 
 ```yaml
-uses: actions/stacscan@v1
+uses: stacscan/stacs-ci@0.1.0
 ```
 
 The following example scans a sub-directory in the repository. In this example the 
@@ -99,7 +99,7 @@ The following example scans a sub-directory in the repository. In this example t
 of a Github actions pipeline.
 
 ```yaml
-uses: actions/stacscan@v1
+uses: stacscan/stacs-ci@0.1.0
 with:
     scan-directory: 'binaries/'
 ```
@@ -108,7 +108,7 @@ The following example disables 'failing the build' if there are findings which h
 been ignored / suppressed.
 
 ```yaml
-uses: actions/stacscan@v1
+uses: stacscan/stacs-ci@0.1.0
 with:
     fail-build: false
 ```
