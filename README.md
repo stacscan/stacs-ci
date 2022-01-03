@@ -19,8 +19,8 @@
 ## What is it?
 
 STACS is a [YARA](https://virustotal.github.io/yara/) powered static credential scanner
-which suports source code, binary file formats, analysis of nested archives, composable
-rulesets and ignore lists, and SARIF reporting.
+which supports source code, binary file formats, analysis of nested archives, composable
+rule-sets and ignore lists, and SARIF reporting.
 
 This repository contains a set of modules to enable integration of STACS with commonly
 used CI / CD systems. Currently, supported is:
@@ -72,7 +72,7 @@ pull request, then a regular comment will be added to the triggering pull reques
 
 ##### `scan-directory`
 
-An optional subdirectory to scan, relative to the repository root. This allows scanning
+An optional sub-directory to scan, relative to the repository root. This allows scanning
 to be limited to a specific directory under the repository root.
 
 Defaults to the repository root.
@@ -87,8 +87,10 @@ Defaults to `true`
 
 #### Example Usage
 
-The following example scans the currently checked out commit and uploads the findings
-as security events to Github (see "Permissions" section below).
+The following example scans the currently checked out commit and adds review comments
+for findings to an associated pull-request (see "Permissions" section below). If the
+trigger was not a pull-request, findings will instead be printed to the console and
+STACS CI will exit with a non-zero status (`100`) if unsupressed findings were present.
 
 ```yaml
 uses: stacscan/stacs-ci@0.1.0
@@ -148,16 +150,16 @@ quick identification of exactly where the credential is.
 
 #### Basic
 
-The simpliest form of executing the Generic CI integration can be performed using the
+The simplest form of executing the Generic CI integration can be performed using the
 following Docker command from the directory to be scanned. Using this default
-configuration Docker will complete with a non-zero exit code if any unsupressed findings
+configuration Docker will complete with a non-zero exit code if any unsuppressed findings
 are found:
 
 ```bash
 docker run -it -v $(pwd):/mnt/stacs/input stacscan/stacs-ci:latest
 ```
 
-To prevent a non-zero exit code on unsupressed findings, such as for initial 'dry run'
+To prevent a non-zero exit code on unsuppressed findings, such as for initial 'dry run'
 style operation, the following command can be run:
 
 ```bash
