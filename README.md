@@ -59,7 +59,7 @@ detected.
 If STACS detects a static credential during a pull request, a review comment will be
 added to the line containing the static credential:
 
-<img src="./docs/images/github_comment.png?raw=true" width="500px" alt="Github Comment of finding" />
+<img src="https://raw.githubusercontent.com/stacscan/stacs-ci/main/docs/images/github_comment.png?raw=true" width="500px" alt="Github Comment of finding" />
 
 The STACS Github integration will even check the pull request to see whether there is
 an existing comment for this finding, preventing multiple comments being added to the
@@ -93,7 +93,7 @@ trigger was not a pull-request, findings will instead be printed to the console 
 STACS CI will exit with a non-zero status (`100`) if unsupressed findings were present.
 
 ```yaml
-uses: stacscan/stacs-ci@0.1.0
+uses: stacscan/stacs-ci@0.1.1
 ```
 
 The following example scans a sub-directory in the repository. In this example the 
@@ -101,7 +101,7 @@ The following example scans a sub-directory in the repository. In this example t
 of a Github actions pipeline.
 
 ```yaml
-uses: stacscan/stacs-ci@0.1.0
+uses: stacscan/stacs-ci@0.1.1
 with:
     scan-directory: 'binaries/'
 ```
@@ -110,7 +110,7 @@ The following example disables 'failing the build' if there are findings which h
 been ignored / suppressed.
 
 ```yaml
-uses: stacscan/stacs-ci@0.1.0
+uses: stacscan/stacs-ci@0.1.1
 with:
     fail-build: false
 ```
@@ -143,7 +143,7 @@ actionable manner, and signal to the CI system that the build should fail on fin
 If STACS detects a static credential, a results block will be printed to the console
 with information required to identify its location:
 
-<img src="./docs/images/generic_tui.png?raw=true" width="500px" alt="Terminal output of findings" />
+<img src="https://raw.githubusercontent.com/stacscan/stacs-ci/main/docs/images/generic_tui.png?raw=true" width="500px" alt="Terminal output of findings" />
 
 If the credential is found within an archive, STACS will print a file tree to allow
 quick identification of exactly where the credential is.
