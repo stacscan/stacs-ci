@@ -48,6 +48,9 @@ def position_in_diff(
     # the locations which was modified. In this case, once again, a regular comment
     # will be added as we cannot annotate part of the file which was not modified by
     # this pull-request.
+    if filepath not in changes:
+        raise exceptions.ChangeNotInDiffException()
+
     for start, change in changes[filepath].items():
         # Determine the last line number of this hunk by counting all additions and
         # existing lines, but ignoring removals.
@@ -183,30 +186,35 @@ def main(sarif_file: str, prefix: str = None):
             # finding has a line number to quickly check if the finding is inside a
             # binary.
             if finding.line and parent is None:
-                position = position_in_diff(filepath, finding.line, changes)
+                # Only add a review comment if the file is present in the review.
+                try:
+                    position = position_in_diff(filepath, finding.line, changes)
 
-                log.info(
-                    f"Attempting to add review comment for {finding.rule} finding in "
-                    f"regular file at {filepath}"
-                )
-                github.add_pull_request_review_comment(
-                    repository=os.environ["GITHUB_REPOSITORY"],
-                    reference=os.environ["GITHUB_REF"],
-                    comment=FILE_COMMENT_TEMPLATE.format(
-                        location=finding.location,
-                        sample=finding.sample,
-                        filename=filepath,
-                        rule=rule.id,
-                        description=rule.description,
-                        fhash=fhash,
-                        version=run.tool.version,
-                        suppression=helpers.generate_suppression(filepath),
-                    ),
-                    filepath=filepath,
-                    position=position,
-                    commit=os.environ["GITHUB_SHA"],
-                )
-                continue
+                    log.info(
+                        f"Attempting to add review comment for {finding.rule} finding "
+                        f"in regular file at {filepath}"
+                    )
+                    github.add_pull_request_review_comment(
+                        repository=os.environ["GITHUB_REPOSITORY"],
+                        reference=os.environ["GITHUB_REF"],
+                        comment=FILE_COMMENT_TEMPLATE.format(
+                            location=finding.location,
+                            sample=finding.sample,
+                            filename=filepath,
+                            rule=rule.id,
+                            description=rule.description,
+                            fhash=fhash,
+                            version=run.tool.version,
+                            suppression=helpers.generate_suppression(filepath),
+                        ),
+                        filepath=filepath,
+                        position=position,
+                        commit=os.environ["GITHUB_SHA"],
+                    )
+                    continue
+                except exceptions.ChangeNotInDiffException:
+                    # This case will be handled later.
+                    pass
 
             # Check if the finding is inside of an archive, and if so, generate a file
             # tree for easier location.
@@ -232,10 +240,11 @@ def main(sarif_file: str, prefix: str = None):
                 )
                 continue
 
-            # Otherwise, the finding is likely in a binary directly in the repository.
+            # Otherwise, the finding is likely in a binary directly in the repository,
+            # or a text file already in the target branch.
             log.info(
                 f"Attempting to add pull-request comment for {finding.rule} "
-                f"finding in binary file at {filepath}"
+                f"finding in file at {filepath}"
             )
             github.add_issue_comment(
                 repository=os.environ["GITHUB_REPOSITORY"],
