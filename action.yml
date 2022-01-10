@@ -11,12 +11,15 @@ inputs:
   fail-build:
     description: 'Whether to fail the build on unsupressed finding.'
     default: 'true'
+  github-token:
+    description: 'The Github Token to use when authenticating to the Github API'
+    default: "${{ github.token }}"
 
 runs:
   using: 'docker'
   image: 'Dockerfile'
   env:
-    GITHUB_TOKEN: ${{ secrets.github_token }}
+    GITHUB_TOKEN: ${{ inputs.github-token }}
     FAIL_BUILD: ${{ inputs.fail-build }}
     SCAN_SUBDIR: ${{ inputs.scan-directory }}
     SCAN_DIR: "/github/workspace"
