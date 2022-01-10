@@ -13,11 +13,10 @@ inputs:
     default: 'true'
 
 runs:
-  using: 'composite'
-  steps:
-    - uses: 'docker://stacscan/stacs-ci:0.1.3-r492bbb6'
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-        FAIL_BUILD: ${{ inputs.fail-build }}
-        SCAN_SUBDIR: ${{ inputs.scan-directory }}
-        SCAN_DIR: "/github/workspace"
+  using: 'docker'
+  image: 'Dockerfile'
+  env:
+    GITHUB_TOKEN: ${{ secrets.github_token }}
+    FAIL_BUILD: ${{ inputs.fail-build }}
+    SCAN_SUBDIR: ${{ inputs.scan-directory }}
+    SCAN_DIR: "/github/workspace"
