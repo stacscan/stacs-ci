@@ -16,6 +16,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Configure Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Prebuild Docker Image
+        run: |
+          RULES_VERSION="$(head -n1 Dockerfile | cut -d '-' -f 2)"
+          pip install .
+          STACS_CI_VERSION="$(python -c 'from stacs.ci.__about__ import __version__ ; print(__version__, end="")')"
+          docker build -t "stacscan/stacs-ci:${STACS_CI_VERSION}-${RULES_VERSION}" .
+
       - name: Repository Root
         uses: ./
         with:
