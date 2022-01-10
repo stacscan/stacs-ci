@@ -11,13 +11,15 @@ inputs:
   fail-build:
     description: 'Whether to fail the build on unsupressed finding.'
     default: 'true'
+  github-token:
+    description: 'The Github Token to use when authenticating to the Github API'
+    default: "${{ github.token }}"
 
 runs:
-  using: 'composite'
-  steps:
-    - uses: 'docker://stacscan/stacs-ci:0.1.0-r1b4c85b'
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-        FAIL_BUILD: ${{ inputs.fail-build }}
-        SCAN_SUBDIR: ${{ inputs.scan-directory }}
-        SCAN_DIR: "/github/workspace"
+  using: 'docker'
+  image: 'Dockerfile'
+  env:
+    GITHUB_TOKEN: ${{ inputs.github-token }}
+    FAIL_BUILD: ${{ inputs.fail-build }}
+    SCAN_SUBDIR: ${{ inputs.scan-directory }}
+    SCAN_DIR: "/github/workspace"

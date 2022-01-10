@@ -93,7 +93,7 @@ trigger was not a pull-request, findings will instead be printed to the console 
 STACS CI will exit with a non-zero status (`100`) if unsupressed findings were present.
 
 ```yaml
-uses: stacscan/stacs-ci@0.1.2
+uses: stacscan/stacs-ci@0.1.3
 ```
 
 The following example scans a sub-directory in the repository. In this example the 
@@ -101,7 +101,7 @@ The following example scans a sub-directory in the repository. In this example t
 of a Github actions pipeline.
 
 ```yaml
-uses: stacscan/stacs-ci@0.1.2
+uses: stacscan/stacs-ci@0.1.3
 with:
     scan-directory: 'binaries/'
 ```
@@ -110,7 +110,7 @@ The following example disables 'failing the build' if there are findings which h
 been ignored / suppressed.
 
 ```yaml
-uses: stacscan/stacs-ci@0.1.2
+uses: stacscan/stacs-ci@0.1.3
 with:
     fail-build: false
 ```
