@@ -65,7 +65,10 @@ def position_in_diff(
             # Track the line number relative to the first diff hunk of this file - which
             # is the required offset to add a comment via the Github API.
             if line == current:
-                position = offset + (index + 1)
+                if current == 1:
+                    position = 1
+                else:
+                    position = offset + (index + 1)
 
         # If we already have a matching location, return it.
         if position:

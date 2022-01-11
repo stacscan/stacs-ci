@@ -29,6 +29,7 @@ class STACSCIDiff(unittest.TestCase):
         # Validate that all file names are properly extracted from the diff.
         expected = [
             "bcrypt",
+            "cookies",
             "example.txt",
             "example.zip",
             "example_more.txt",
