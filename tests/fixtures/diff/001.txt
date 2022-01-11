@@ -2,6 +2,13 @@ diff --git a/bcrypt b/bcrypt
 new file mode 100755
 index 0000000..78bd84b
 Binary files /dev/null and b/bcrypt differ
+diff --git a/cookies b/cookies
+new file mode 100644
+index 0000000..e661734
+--- /dev/null
++++ b/cookies
+@@ -0,0 +1 @@
++Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJJc3N1ZXIiOiJJc3N1ZXIiLCJleHAiOjE2NDE4NTA2MDgsImlhdCI6MTY0MTg1MDYwOH0.cvxBzjFU_2cjOV5mwQHPT_K68Cbu-3_CCVvV9Xb8TNk
 diff --git a/example.txt b/example.txt
 new file mode 100644
 index 0000000..f6c6573

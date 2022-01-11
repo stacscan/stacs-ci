@@ -1,11 +1,18 @@
 {
     "bcrypt": {},
+    "cookies": {
+        "1": {
+            "content": "+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJJc3N1ZXIiOiJJc3N1ZXIiLCJleHAiOjE2NDE4NTA2MDgsImlhdCI6MTY0MTg1MDYwOH0.cvxBzjFU_2cjOV5mwQHPT_K68Cbu-3_CCVvV9Xb8TNk\n",
+            "offset": 1
+        }
+    },
     "example.txt": {
         "1": {
             "content": "+It contains a bunch of things, including static credentials. See?\n+\n+aws_access_key_id=AKIAZJ3PDTI2R9JLXCTH\n+aws_secret_key_id=39isgIVkaUNhaUFZz+U3ENRpXnAmfh/KbPlUIWiQ\n+\n+Told you!\n",
             "offset": 1
         }
     },
+    "example.zip": {},
     "example_more.txt": {
         "1": {
             "content": "+This is a file.\n+\n+Hash is `$1$znwWbYub$3dR.11oVhKjtaOiqCt8V4.`\n+\n+\n+Whoops. I added a credential.\n+\n",
@@ -22,7 +29,6 @@
             "offset": 38
         }
     },
-    "example.zip": {},
     "moved": {},
     "remove": {}
 }

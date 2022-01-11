@@ -57,3 +57,9 @@ class STACSCIGithubPullRequest(unittest.TestCase):
         self.assertEqual(
             pr.position_in_diff(findings[5].filepath, findings[5].line, changes), 42
         )
+
+        # Finding at the first line of a new file (cookies) should be at position 1 in
+        # the diff.
+        self.assertEqual(
+            pr.position_in_diff(findings[6].filepath, findings[6].line, changes), 1
+        )
