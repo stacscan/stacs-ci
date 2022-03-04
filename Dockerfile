@@ -1,4 +1,4 @@
-FROM stacscan/stacs:0.4.4-r9cff04b
+FROM stacscan/stacs:0.4.5-raaa37f7
 
 # Default environment variables.
 ENV FAIL_BUILD=true
